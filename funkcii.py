@@ -33,3 +33,4 @@ def update_data(table, record_id, column, new_value):
 
     conn.commit()
     conn.close()
+    
