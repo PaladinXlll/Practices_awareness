@@ -4,24 +4,25 @@ from PIL import Image, ImageDraw, ImageTk
 import math
 import os
 
-# Настройка внешнего вида
+# ==========================================
+# НАСТРОЙКА
+# ==========================================
+
 ctk.set_appearance_mode("light")
 ctk.set_default_color_theme("blue")
 
+
+# ==========================================
+# ГРАДИЕНТ
+# ==========================================
 
 def create_gradient_image(
     width,
     height,
     radius=0,
-    only_top=False,
-    color1="#C4A86A",
-    color2="#986722",
-    text=""
+    color1="#C9AE6D",
+    color2="#A8731F"
 ):
-    """Создает изображение с горизонтальным градиентом"""
-
-    if width <= 0:
-        width = 510
 
     image = Image.new("RGBA", (width, height), (255, 255, 255, 0))
     draw = ImageDraw.Draw(image)
@@ -42,53 +43,45 @@ def create_gradient_image(
         g = int(g1 + (g2 - g1) * ratio)
         b = int(b1 + (b2 - b1) * ratio)
 
-        for y_coord in range(height):
+        for y in range(height):
 
             draw_pixel = True
 
             if radius > 0:
 
-                # Верхний левый угол
-                if x < radius and y_coord < radius:
-                    dist = math.sqrt(
-                        (radius - x) ** 2 +
-                        (radius - y_coord) ** 2
-                    )
+                # Левый верхний угол
+                if x < radius and y < radius:
+                    dist = math.sqrt((radius - x) ** 2 + (radius - y) ** 2)
                     if dist > radius:
                         draw_pixel = False
 
-                # Верхний правый угол
-                if x >= width - radius and y_coord < radius:
-                    dist = math.sqrt(
-                        (x - (width - radius)) ** 2 +
-                        (radius - y_coord) ** 2
-                    )
+                # Правый верхний угол
+                if x >= width - radius and y < radius:
+                    dist = math.sqrt((x - (width - radius)) ** 2 + (radius - y) ** 2)
                     if dist > radius:
                         draw_pixel = False
 
-                # Нижний левый угол
-                if x < radius and y_coord >= height - radius:
-                    dist = math.sqrt(
-                        (radius - x) ** 2 +
-                        (height - radius - y_coord) ** 2
-                    )
+                # Левый нижний угол
+                if x < radius and y >= height - radius:
+                    dist = math.sqrt((radius - x) ** 2 + (height - radius - y) ** 2)
                     if dist > radius:
                         draw_pixel = False
 
-                # Нижний правый угол
-                if x >= width - radius and y_coord >= height - radius:
-                    dist = math.sqrt(
-                        (x - (width - radius)) ** 2 +
-                        (height - radius - y_coord) ** 2
-                    )
+                # Правый нижний угол
+                if x >= width - radius and y >= height - radius:
+                    dist = math.sqrt((x - (width - radius)) ** 2 + (height - radius - y) ** 2)
                     if dist > radius:
                         draw_pixel = False
 
             if draw_pixel:
-                draw.point((x, y_coord), fill=(r, g, b, 255))
+                draw.point((x, y), fill=(r, g, b, 255))
 
     return ImageTk.PhotoImage(image)
 
+
+# ==========================================
+# ГЛАВНОЕ ОКНО
+# ==========================================
 
 class App(ctk.CTk):
 
@@ -97,100 +90,85 @@ class App(ctk.CTk):
 
         self.title("Practices Awareness")
         self.geometry("1280x910")
-        self.minsize(800, 700)
         self.configure(fg_color="#E9DCB0")
 
-        # Верхняя панель
+        # ==========================================
+        # HEADER
+        # ==========================================
+
         self.header_frame = ctk.CTkFrame(
             self,
             fg_color="#986722",
-            height=99,
+            height=80,
             corner_radius=0
         )
 
-        self.header_frame.pack(fill="x", side="top")
+        self.header_frame.pack(fill="x")
         self.header_frame.pack_propagate(False)
 
-        # Логотип слева
+        # ==========================================
+        # ЛОГОТИП
+        # ==========================================
+
         self.logo_frame = ctk.CTkFrame(
             self.header_frame,
             fg_color="transparent"
         )
 
-        self.logo_frame.pack(side="left", padx=20, pady=10)
+        self.logo_frame.pack(side="left", padx=20)
 
-        self.logo_line1 = ctk.CTkLabel(
+        self.logo1 = ctk.CTkLabel(
             self.logo_frame,
             text="PRACTICES",
             text_color="white",
-            font=("Bayon", 32)
+            font=("Bayon", 30, "bold")
         )
 
-        self.logo_line1.pack(anchor="w")
+        self.logo1.pack(anchor="w")
 
-        self.logo_line2 = ctk.CTkLabel(
+        self.logo2 = ctk.CTkLabel(
             self.logo_frame,
             text="AWARENESS",
             text_color="white",
-            font=("Bayon", 32)
+            font=("Bayon", 30, "bold")
         )
 
-        self.logo_line2.pack(anchor="w", padx=(100, 0))
+        self.logo2.pack(anchor="w", padx=(90, 0))
 
-        # Логотип справа
+        # ==========================================
+        # ПРАВЫЙ ЛОГОТИП
+        # ==========================================
+
         try:
 
             logo_path = "assets/logo.png"
 
             if os.path.exists(logo_path):
 
-                logo_image = Image.open(logo_path)
+                image = Image.open(logo_path)
+                image = image.resize((120, 120))
 
-                logo_image = logo_image.resize(
-                    (150, 150),
-                    Image.LANCZOS
-                )
+                self.logo_img = ImageTk.PhotoImage(image)
 
-                self.logo_photo = ImageTk.PhotoImage(logo_image)
-
-                self.logo_label_img = tk.Label(
+                self.logo_label = tk.Label(
                     self.header_frame,
-                    image=self.logo_photo,
+                    image=self.logo_img,
                     bg="#986722",
                     bd=0
                 )
 
-                self.logo_label_img.pack(
-                    side="right",
-                    padx=(0, 20),
-                    pady=15
-                )
-
-            else:
-                raise FileNotFoundError
+                self.logo_label.pack(side="right", padx=20)
 
         except Exception as e:
+            print(e)
 
-            print("Ошибка загрузки логотипа:", e)
+        # ==========================================
+        # КОНТЕЙНЕР
+        # ==========================================
 
-            self.logo_label_img = tk.Label(
-                self.header_frame,
-                text="📚",
-                font=("Arial", 40),
-                fg="white",
-                bg="#986722"
-            )
-
-            self.logo_label_img.pack(
-                side="right",
-                padx=(0, 20),
-                pady=15
-            )
-
-        # Контейнер
         self.container = ctk.CTkFrame(
             self,
-            fg_color="#FFFFFF",
+            fg_color="#E9DCB0",
             corner_radius=0
         )
 
@@ -200,28 +178,27 @@ class App(ctk.CTk):
 
     def show_login(self):
 
-        self.clear_container()
+        for widget in self.container.winfo_children():
+            widget.destroy()
 
-        self.login_view = LoginFrame(
+        LoginFrame(
             self.container,
             self.show_dashboard
-        )
-
-        self.login_view.pack(fill="both", expand=True)
+        ).pack(fill="both", expand=True)
 
     def show_dashboard(self):
-
-        self.clear_container()
-
-        self.dashboard_view = DashboardFrame(self.container)
-
-        self.dashboard_view.pack(fill="both", expand=True)
-
-    def clear_container(self):
 
         for widget in self.container.winfo_children():
             widget.destroy()
 
+        DashboardFrame(
+            self.container
+        ).pack(fill="both", expand=True)
+
+
+# ==========================================
+# LOGIN
+# ==========================================
 
 class LoginFrame(ctk.CTkFrame):
 
@@ -233,12 +210,15 @@ class LoginFrame(ctk.CTkFrame):
         card_width = 510
         card_height = 518
 
-        # Карточка без скругления
+        # ==========================================
+        # КАРТОЧКА
+        # ==========================================
+
         self.card = ctk.CTkFrame(
             self,
             width=card_width,
             height=card_height,
-            fg_color="white",
+            fg_color="#F2F2F2",
             corner_radius=0
         )
 
@@ -248,172 +228,169 @@ class LoginFrame(ctk.CTkFrame):
             anchor="center"
         )
 
-        self.card.update_idletasks()
+        # ==========================================
+        # HEADER ГРАДИЕНТ
+        # ==========================================
 
-        actual_width = self.card.winfo_width()
-
-        if actual_width <= 0:
-            actual_width = card_width
-
-        # Верхний градиент
-        header_height = 106
+        header_height = 110
 
         self.header_image = create_gradient_image(
-            actual_width,
+            card_width,
             header_height,
             radius=0
         )
 
-        self.header_label = tk.Label(
+        self.header_canvas = tk.Canvas(
             self.card,
-            image=self.header_image,
+            width=card_width,
+            height=header_height,
+            highlightthickness=0,
             bd=0
         )
 
-        self.header_label.image = self.header_image
+        self.header_canvas.place(x=0, y=0)
 
-        self.header_label.place(
-            x=0,
-            y=0,
-            width=actual_width,
-            height=header_height
+        self.header_canvas.create_image(
+            0,
+            0,
+            anchor="nw",
+            image=self.header_image
         )
 
-        #Заголовок
-        title_label = tk.Label(
-            self.header_label,
+        # ==========================================
+        # ТЕКСТ БЕЗ ФОНА
+        # ==========================================
+
+        self.header_canvas.create_text(
+            card_width // 2,
+            header_height // 2,
             text="Авторизация",
-            font=("Advent Pro", 50),
-            fg="white",
-            bg="#B78A3A",
-            bd=0
+            fill="white",
+            font=("Advent Pro", 50)
         )
-        # self.title_canvas.create_text(
-        #             200, 35, # 50% от ширины и высоты для центровки
-        #             text="Авторизация",
-        #             fill="white",
-        #             font=("Arial", 22, "bold")
-        #         )
-        title_label.place(
+
+        # ==========================================
+        # ЛОГИН
+        # ==========================================
+
+        self.entry_log = ctk.CTkEntry(
+            self.card,
+            width=408,
+            height=73,
+            placeholder_text="Логин",
+            font=("Advent Pro", 28),
+            corner_radius=25,
+            border_width=2,
+            border_color="#555555",
+            fg_color="#F2F2F2",
+            text_color="black"
+        )
+
+        self.entry_log.place(
             relx=0.5,
-            y=55,
+            y=180,
             anchor="center"
         )
 
-        # Поле логина
-        self.entry_log = ctk.CTkEntry(
-            self.card,
-            width=410,
-            height=74,
-            placeholder_text="Логин",
-            font=("Advent Pro", 25),
-            corner_radius=20,
-            border_width=2,
-            border_color="#4D4C4A",
-            fg_color="white",
-            text_color="#333333"
-        )
+        # ==========================================
+        # ПАРОЛЬ
+        # ==========================================
 
-        self.entry_log.place(x=50, y=150)
-
-        self.entry_log.bind(
-            "<Return>",
-            lambda e: self.entry_pass.focus()
-        )
-
-        # Поле пароля
         self.entry_pass = ctk.CTkEntry(
             self.card,
-            width=410,
-            height=74,
+            width=408,
+            height=73,
             placeholder_text="Пароль",
-            font=("Advent Pro", 25),
-            corner_radius=20,
+            font=("Advent Pro", 28),
+            corner_radius=25,
             border_width=2,
-            border_color="#4D4C4A",
-            fg_color="white",
-            text_color="#333333",
+            border_color="#555555",
+            fg_color="#F2F2F2",
+            text_color="black",
             show="*"
         )
 
-        self.entry_pass.place(x=50, y=240)
-
-        self.entry_pass.bind(
-            "<Return>",
-            lambda e: self.check_credentials()
-        )
-
-        # Ошибка
-        self.error_label = ctk.CTkLabel(
-            self.card,
-            text="",
-            text_color="#E74C3C",
-            font=("Advent Pro", 20)
-        )
-
-        self.error_label.place(
-            x=255,
-            y=330,
+        self.entry_pass.place(
+            relx=0.5,
+            y=290,
             anchor="center"
         )
 
-        # =========================
-        # КНОПКА СО СКРУГЛЕНИЕМ
-        # =========================
+        # ==========================================
+        # ОШИБКА
+        # ==========================================
+
+        self.error_label = ctk.CTkLabel(
+            self.card,
+            text="",
+            text_color="red",
+            font=("Advent Pro", 18),
+            fg_color="transparent"
+        )
+
+        self.error_label.place(
+            relx=0.5,
+            y=360,
+            anchor="center"
+        )
+
+        # ==========================================
+        # КНОПКА
+        # ==========================================
 
         btn_width = 410
         btn_height = 74
 
-        btn_image = create_gradient_image(
+        self.btn_image = create_gradient_image(
             btn_width,
             btn_height,
             radius=20
         )
 
-        btn_label = tk.Label(
+        self.btn_canvas = tk.Canvas(
             self.card,
-            image=btn_image,
-            cursor="hand2",
-            bd=0
-        )
-
-        btn_label.image = btn_image
-
-        btn_label.place(
-            x=115,
-            y=500,
-            width=410,
-            height=74
-        )
-
-        # Текст кнопки
-        btn_text = tk.Label(
-            btn_label,
-            text="Вход",
-            font=("Advent Pro", 35),
-            fg="white",
-            bg="#B78A3A",
-            bd=0,
+            width=btn_width,
+            height=btn_height,
             highlightthickness=0,
-            cursor="hand2"
+            bd=0,
+            bg="#F2F2F2"
         )
 
-        btn_text.place(
+        self.btn_canvas.place(
             relx=0.5,
-            rely=0.5,
+            y=535,
             anchor="center"
         )
 
-        # События
-        btn_label.bind(
+        self.btn_canvas.create_image(
+            0,
+            0,
+            anchor="nw",
+            image=self.btn_image
+        )
+
+        # ==========================================
+        # ТЕКСТ КНОПКИ БЕЗ ФОНА
+        # ==========================================
+
+        self.btn_canvas.create_text(
+            btn_width // 2,
+            btn_height // 2,
+            text="Вход",
+            fill="white",
+            font=("Advent Pro", 36)
+        )
+
+        self.btn_canvas.bind(
             "<Button-1>",
             lambda e: self.check_credentials()
         )
 
-        btn_text.bind(
-            "<Button-1>",
-            lambda e: self.check_credentials()
-        )
+        self.btn_canvas.configure(cursor="hand2")
+
+    # ==========================================
+    # ПРОВЕРКА
+    # ==========================================
 
     def check_credentials(self):
 
@@ -430,230 +407,31 @@ class LoginFrame(ctk.CTkFrame):
                 text="Неверный логин или пароль"
             )
 
-            self.entry_log.configure(
-                border_color="#E74C3C"
-            )
 
-            self.entry_pass.configure(
-                border_color="#E74C3C"
-            )
-
-            self.after(2000, self.reset_borders)
-
-    def reset_borders(self):
-
-        self.entry_log.configure(
-            border_color="#4D4C4A"
-        )
-
-        self.entry_pass.configure(
-            border_color="#4D4C4A"
-        )
-
-        self.error_label.configure(text="")
-
+# ==========================================
+# DASHBOARD
+# ==========================================
 
 class DashboardFrame(ctk.CTkFrame):
 
     def __init__(self, master):
         super().__init__(master, fg_color="#DCCB98")
 
-        # =========================
-        # Верхняя панель навигации
-        # =========================
-
-        top_bar = ctk.CTkFrame(
+        label = ctk.CTkLabel(
             self,
-            height=55,
-            fg_color="#D6C189",
-            corner_radius=0
-        )
-        top_bar.pack(fill="x")
-
-        top_bar.pack_propagate(False)
-
-        back_btn = ctk.CTkButton(
-            top_bar,
-            text="⟲",
-            width=40,
-            fg_color="transparent",
-            hover_color="#C8B57E",
-            text_color="black",
-            font=("Arial", 22)
-        )
-        back_btn.pack(side="left", padx=(10, 5), pady=5)
-
-        home_label = ctk.CTkLabel(
-            top_bar,
-            text="Главная страница",
-            font=("Advent Pro", 28, "bold"),
-            text_color="black"
-        )
-        home_label.pack(side="left", padx=10)
-
-        add_btn = ctk.CTkButton(
-            top_bar,
-            text="⊕",
-            width=40,
-            fg_color="transparent",
-            hover_color="#C8B57E",
-            text_color="black",
-            font=("Arial", 24)
-        )
-        add_btn.pack(side="right", padx=15)
-
-        # =========================
-        # Таблица
-        # =========================
-
-        table_frame = ctk.CTkFrame(
-            self,
-            fg_color="#E6D7A8",
-            corner_radius=15
-        )
-        table_frame.pack(
-            fill="both",
-            expand=True,
-            padx=20,
-            pady=20
+            text="Добро пожаловать!",
+            font=("Advent Pro", 40, "bold"),
+            text_color="#986722"
         )
 
-        columns = [
-            "Название",
-            "Место проведения",
-            "Мероприятие",
-            "Уровень",
-            "Дата",
-            "Контроль",
-            "Документы",
-            ""
-        ]
+        label.pack(expand=True)
 
-        column_widths = [140, 220, 200, 130, 150, 220, 200, 80]
 
-        # =========================
-        # Заголовки
-        # =========================
-
-        for i, col in enumerate(columns):
-
-            header = ctk.CTkLabel(
-                table_frame,
-                text=col,
-                font=("Advent Pro", 24, "bold"),
-                text_color="#2B2B2B",
-                fg_color="#D9C998",
-                corner_radius=0
-            )
-
-            header.grid(
-                row=0,
-                column=i,
-                sticky="nsew",
-                ipadx=10,
-                ipady=12
-            )
-
-            table_frame.grid_columnconfigure(
-                i,
-                weight=1,
-                minsize=column_widths[i]
-            )
-
-        # =========================
-        # Строки таблицы
-        # =========================
-
-        for row in range(1, 14):
-
-            for col in range(len(columns)):
-
-                cell_frame = ctk.CTkFrame(
-                    table_frame,
-                    fg_color="#E9DCB0",
-                    corner_radius=0,
-                    border_width=1,
-                    border_color="#7A6A45"
-                )
-
-                cell_frame.grid(
-                    row=row,
-                    column=col,
-                    sticky="nsew"
-                )
-
-                # Первая колонка
-                if col == 0:
-
-                    label = ctk.CTkLabel(
-                        cell_frame,
-                        text="ⓘ",
-                        font=("Arial", 22),
-                        text_color="black"
-                    )
-
-                    label.pack(
-                        side="left",
-                        padx=10,
-                        pady=8
-                    )
-
-                # Последняя колонка
-                elif col == len(columns) - 1:
-
-                    edit_btn = ctk.CTkButton(
-                        cell_frame,
-                        text="✎",
-                        width=28,
-                        height=28,
-                        fg_color="transparent",
-                        hover_color="#D5C28E",
-                        text_color="black",
-                        font=("Arial", 18)
-                    )
-
-                    edit_btn.pack(
-                        side="left",
-                        padx=(8, 4),
-                        pady=6
-                    )
-
-                    delete_btn = ctk.CTkButton(
-                        cell_frame,
-                        text="⊗",
-                        width=28,
-                        height=28,
-                        fg_color="transparent",
-                        hover_color="#D5C28E",
-                        text_color="black",
-                        font=("Arial", 18)
-                    )
-
-                    delete_btn.pack(
-                        side="left",
-                        padx=4,
-                        pady=6
-                    )
-
-                else:
-
-                    entry = ctk.CTkEntry(
-                        cell_frame,
-                        fg_color="#E9DCB0",
-                        border_width=0,
-                        text_color="black",
-                        font=("Advent Pro", 20)
-                    )
-
-                    entry.pack(
-                        fill="both",
-                        expand=True,
-                        padx=5,
-                        pady=5
-                    )
+# ==========================================
+# ЗАПУСК
+# ==========================================
 
 if __name__ == "__main__":
 
     app = App()
     app.mainloop()
-    
