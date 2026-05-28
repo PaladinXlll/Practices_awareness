@@ -10,7 +10,6 @@ import os
 ctk.set_appearance_mode("light")
 ctk.set_default_color_theme("blue")
 
-
 # ==========================================
 # ГЛАВНОЕ ОКНО
 # ==========================================
@@ -41,7 +40,7 @@ class App(ctk.CTk):
         header.pack_propagate(False)
 
         # ==========================================
-        # ЛОГОТИП СЛЕВА
+        # ЛОГО СЛЕВА
         # ==========================================
 
         logo_frame = ctk.CTkFrame(
@@ -70,7 +69,7 @@ class App(ctk.CTk):
         logo2.pack(anchor="w", padx=(90, 0))
 
         # ==========================================
-        # ЛОГОТИП СПРАВА
+        # ЛОГО СПРАВА
         # ==========================================
 
         try:
@@ -96,13 +95,8 @@ class App(ctk.CTk):
         except Exception as e:
             print("Ошибка загрузки картинки:", e)
 
-        # ==========================================
-        # DASHBOARD
-        # ==========================================
-
         dashboard = DashboardFrame(self)
         dashboard.pack(fill="both", expand=True)
-
 
 # ==========================================
 # DASHBOARD
@@ -116,7 +110,7 @@ class DashboardFrame(ctk.CTkFrame):
         self.row_entries = {}
 
         # ==========================================
-        # ВЕРХНЯЯ ПАНЕЛЬ
+        # TOP BAR
         # ==========================================
 
         top_bar = ctk.CTkFrame(
@@ -130,33 +124,45 @@ class DashboardFrame(ctk.CTkFrame):
         top_bar.pack_propagate(False)
 
         # ==========================================
-        # КНОПКА НАЗАД
+        # ИКОНКА ВЫХОДА
         # ==========================================
 
-        back_image = Image.open(
-            "C:/Users/vostr/OneDrive/Desktop/выход.png"
-        )
+        exit_path = "C:/Users/vostr/OneDrive/Desktop/выход.png"
 
-        self.back_icon = ctk.CTkImage(
-            light_image=back_image,
-            dark_image=back_image,
-            size=(32, 32)
-        )
+        if os.path.exists(exit_path):
 
-        back_btn = ctk.CTkButton(
-            top_bar,
-            image=self.back_icon,
-            text="",
-            width=40,
-            fg_color="transparent",
-            hover_color="#C8B57E"
-        )
+            exit_image = Image.open(exit_path)
 
-        back_btn.pack(
-            side="left",
-            padx=(10, 5),
-            pady=5
-        )
+            self.exit_icon = ctk.CTkImage(
+                light_image=exit_image,
+                dark_image=exit_image,
+                size=(32, 32)
+            )
+
+            back_btn = ctk.CTkButton(
+                top_bar,
+                image=self.exit_icon,
+                text="",
+                width=40,
+                fg_color="transparent",
+                hover_color="#C8B57E",
+                command=self.show_exit_dialog
+            )
+
+        else:
+
+            back_btn = ctk.CTkButton(
+                top_bar,
+                text="←",
+                width=40,
+                fg_color="transparent",
+                hover_color="#C8B57E",
+                text_color="black",
+                font=("Arial", 24),
+                command=self.show_exit_dialog
+            )
+
+        back_btn.pack(side="left", padx=(10, 5), pady=5)
 
         # ==========================================
         # ЗАГОЛОВОК
@@ -172,36 +178,48 @@ class DashboardFrame(ctk.CTkFrame):
         title_label.pack(side="left", padx=10)
 
         # ==========================================
-        # КНОПКА ДОБАВИТЬ
+        # ИКОНКА ДОБАВЛЕНИЯ
         # ==========================================
 
-        add_image = Image.open(
-            "C:/Users/vostr/OneDrive/Desktop/добавить.png"
-        )
+        add_path = "C:/Users/vostr/OneDrive/Desktop/добавить.png"
 
-        self.add_icon = ctk.CTkImage(
-            light_image=add_image,
-            dark_image=add_image,
-            size=(30, 30)
-        )
+        if os.path.exists(add_path):
 
-        add_btn = ctk.CTkButton(
-            top_bar,
-            image=self.add_icon,
-            text="",
-            width=40,
-            fg_color="transparent",
-            hover_color="#C8B57E",
-            command=self.show_create_dialog
-        )
+            add_image = Image.open(add_path)
 
-        add_btn.pack(
-            side="right",
-            padx=15
-        )
+            self.add_icon = ctk.CTkImage(
+                light_image=add_image,
+                dark_image=add_image,
+                size=(30, 30)
+            )
+
+            add_btn = ctk.CTkButton(
+                top_bar,
+                image=self.add_icon,
+                text="",
+                width=40,
+                fg_color="transparent",
+                hover_color="#C8B57E",
+                command=self.show_create_dialog
+            )
+
+        else:
+
+            add_btn = ctk.CTkButton(
+                top_bar,
+                text="+",
+                width=40,
+                fg_color="transparent",
+                hover_color="#C8B57E",
+                text_color="black",
+                font=("Arial", 30),
+                command=self.show_create_dialog
+            )
+
+        add_btn.pack(side="right", padx=15)
 
         # ==========================================
-        # ПРОКРУЧИВАЕМАЯ ТАБЛИЦА
+        # ТАБЛИЦА
         # ==========================================
 
         table_frame = ctk.CTkScrollableFrame(
@@ -233,10 +251,6 @@ class DashboardFrame(ctk.CTkFrame):
 
         widths = [180, 220, 220, 150, 150, 220, 220, 120]
 
-        # ==========================================
-        # ЗАГОЛОВКИ
-        # ==========================================
-
         for i, col in enumerate(columns):
 
             header = ctk.CTkLabel(
@@ -263,12 +277,24 @@ class DashboardFrame(ctk.CTkFrame):
                 minsize=widths[i]
             )
 
-        # ==========================================
-        # СТАРТОВЫЕ СТРОКИ
-        # ==========================================
-
         for _ in range(10):
             self.create_row()
+
+    # ==========================================
+    # ЦЕНТРИРОВАНИЕ ОКНА
+    # ==========================================
+
+    def center_window(self, window, width, height):
+
+        self.update_idletasks()
+
+        screen_width = window.winfo_screenwidth()
+        screen_height = window.winfo_screenheight()
+
+        x = int((screen_width / 2) - (width / 2))
+        y = int((screen_height / 2) - (height / 2))
+
+        window.geometry(f"{width}x{height}+{x}+{y}")
 
     # ==========================================
     # СОЗДАНИЕ СТРОКИ
@@ -296,10 +322,6 @@ class DashboardFrame(ctk.CTkFrame):
                 column=col,
                 sticky="nsew"
             )
-
-            # ==========================================
-            # ПЕРВАЯ КОЛОНКА
-            # ==========================================
 
             if col == 0:
 
@@ -340,77 +362,93 @@ class DashboardFrame(ctk.CTkFrame):
 
                 self.row_entries[row].append(entry)
 
-            # ==========================================
-            # ПОСЛЕДНЯЯ КОЛОНКА
-            # ==========================================
-
             elif col == columns_count - 1:
 
                 # ==========================================
-                # КНОПКА РЕДАКТИРОВАНИЯ
+                # ИКОНКА РЕДАКТИРОВАНИЯ
                 # ==========================================
 
-                edit_image = Image.open(
-                    "C:/Users/vostr/OneDrive/Desktop/редактор.png"
-                )
+                edit_path = "C:/Users/vostr/OneDrive/Desktop/редактор.png"
 
-                self.edit_icon = ctk.CTkImage(
-                    light_image=edit_image,
-                    dark_image=edit_image,
-                    size=(28, 28)
-                )
+                if os.path.exists(edit_path):
 
-                edit_btn = ctk.CTkButton(
-                    cell_frame,
-                    image=self.edit_icon,
-                    text="",
-                    width=34,
-                    height=34,
-                    fg_color="transparent",
-                    hover_color="#D5C28E",
-                    command=lambda r=row: self.show_edit_dialog(r)
-                )
+                    edit_image = Image.open(edit_path)
 
-                edit_btn.pack(
-                    side="left",
-                    padx=(5, 2),
-                    pady=5
-                )
+                    self.edit_icon = ctk.CTkImage(
+                        light_image=edit_image,
+                        dark_image=edit_image,
+                        size=(28, 28)
+                    )
+
+                    edit_btn = ctk.CTkButton(
+                        cell_frame,
+                        image=self.edit_icon,
+                        text="",
+                        width=34,
+                        height=34,
+                        fg_color="transparent",
+                        hover_color="#D5C28E",
+                        command=lambda r=row: self.show_edit_dialog(r)
+                    )
+
+                else:
+
+                    edit_btn = ctk.CTkButton(
+                        cell_frame,
+                        text="✎",
+                        width=34,
+                        height=34,
+                        fg_color="transparent",
+                        hover_color="#D5C28E",
+                        text_color="black",
+                        font=("Arial", 18),
+                        command=lambda r=row: self.show_edit_dialog(r)
+                    )
+
+                edit_btn.pack(side="left", padx=(5, 2), pady=5)
 
                 # ==========================================
-                # КНОПКА УДАЛЕНИЯ
+                # ИКОНКА УДАЛЕНИЯ
                 # ==========================================
 
-                delete_image = Image.open(
-                    "C:/Users/vostr/OneDrive/Desktop/icons8-удалить-24 1.png"
-                )
+                delete_path = "C:/Users/vostr/OneDrive/Desktop/icons8-удалить-24 1.png"
 
-                self.delete_icon = ctk.CTkImage(
-                    light_image=delete_image,
-                    dark_image=delete_image,
-                    size=(28, 28)
-                )
+                if os.path.exists(delete_path):
 
-                delete_btn = ctk.CTkButton(
-                    cell_frame,
-                    image=self.delete_icon,
-                    text="",
-                    width=34,
-                    height=34,
-                    fg_color="transparent",
-                    hover_color="#D5C28E",
-                    command=lambda r=row: self.show_delete_dialog(r)
-                )
+                    delete_image = Image.open(delete_path)
 
-                delete_btn.pack(
-                    side="left",
-                    padx=2,
-                    pady=5
-                )
+                    self.delete_icon = ctk.CTkImage(
+                        light_image=delete_image,
+                        dark_image=delete_image,
+                        size=(28, 28)
+                    )
 
-            # ==========================================
-            # ОСТАЛЬНЫЕ КОЛОНКИ
-            # ==========================================
+                    delete_btn = ctk.CTkButton(
+                        cell_frame,
+                        image=self.delete_icon,
+                        text="",
+                        width=34,
+                        height=34,
+                        fg_color="transparent",
+                        hover_color="#D5C28E",
+                        command=lambda r=row: self.show_delete_dialog(r)
+                    )
+
+                else:
+
+                    delete_btn = ctk.CTkButton(
+                        cell_frame,
+                        text="⊗",
+                        width=34,
+                        height=34,
+                        fg_color="transparent",
+                        hover_color="#D5C28E",
+                        text_color="black",
+                        font=("Arial", 18),
+                        command=lambda r=row: self.show_delete_dialog(r)
+                    )
+
+                delete_btn.pack(side="left", padx=2, pady=5)
 
             else:
 
@@ -435,8 +473,123 @@ class DashboardFrame(ctk.CTkFrame):
         self.current_row += 1
 
     # ==========================================
-    # СОЗДАТЬ НОВУЮ СТРОКУ
+    # ОБЩЕЕ ОКНО
     # ==========================================
+
+    def create_dialog(
+        self,
+        title_text,
+        message_text,
+        left_text,
+        left_command,
+        right_text="Отмена"
+    ):
+
+        dialog = ctk.CTkToplevel(self)
+
+        self.center_window(dialog, 250, 186)
+
+        dialog.resizable(False, False)
+        dialog.configure(fg_color="#DDD0A4")
+
+        header = ctk.CTkFrame(
+            dialog,
+            height=38,
+            fg_color="#C7A545",
+            corner_radius=0
+        )
+
+        header.pack(fill="x")
+
+        title = ctk.CTkLabel(
+            header,
+            text=title_text,
+            font=("Arial", 24),
+            text_color="#222222"
+        )
+
+        title.place(relx=0.5, rely=0.5, anchor="center")
+
+        text_label = ctk.CTkLabel(
+            dialog,
+            text=message_text,
+            font=("Arial", 20),
+            text_color="#444444",
+            justify="center"
+        )
+
+        text_label.pack(expand=True)
+
+        bottom = ctk.CTkFrame(
+            dialog,
+            height=45,
+            fg_color="#D6C79A",
+            corner_radius=0
+        )
+
+        bottom.pack(side="bottom", fill="x")
+
+        left_btn = ctk.CTkButton(
+            bottom,
+            text=left_text,
+            width=125,
+            height=45,
+            fg_color="#D6C79A",
+            hover_color="#C7B887",
+            text_color="#555555",
+            corner_radius=0,
+            command=lambda: left_command(dialog)
+        )
+
+        left_btn.pack(side="left")
+
+        separator = tk.Frame(
+            bottom,
+            width=1,
+            bg="#8F845D"
+        )
+
+        separator.pack(side="left", fill="y")
+
+        right_btn = ctk.CTkButton(
+            bottom,
+            text=right_text,
+            width=125,
+            height=45,
+            fg_color="#D6C79A",
+            hover_color="#C7B887",
+            text_color="#777777",
+            corner_radius=0,
+            command=dialog.destroy
+        )
+
+        right_btn.pack(side="left")
+
+    # ==========================================
+    # ВЫХОД
+    # ==========================================
+
+    def show_exit_dialog(self):
+
+        self.create_dialog(
+            "Выход",
+            "Вы точно хотите\nвыйти?",
+            "Выход",
+            lambda d: self.master.destroy()
+        )
+
+    # ==========================================
+    # СОЗДАНИЕ
+    # ==========================================
+
+    def show_create_dialog(self):
+
+        self.create_dialog(
+            "Создать",
+            "Сохранить изменения",
+            "Сохранить",
+            self.create_new_row
+        )
 
     def create_new_row(self, dialog):
 
@@ -444,180 +597,17 @@ class DashboardFrame(ctk.CTkFrame):
         dialog.destroy()
 
     # ==========================================
-    # ОКНО СОЗДАНИЯ
-    # ==========================================
-
-    def show_create_dialog(self):
-
-        dialog = ctk.CTkToplevel(self)
-
-        dialog.geometry("250x186")
-        dialog.resizable(False, False)
-        dialog.title("Создать")
-
-        dialog.configure(fg_color="#DDD0A4")
-
-        header = ctk.CTkFrame(
-            dialog,
-            height=38,
-            fg_color="#C7A545",
-            corner_radius=0
-        )
-
-        header.pack(fill="x")
-
-        title = ctk.CTkLabel(
-            header,
-            text="Создать",
-            font=("Arial", 24),
-            text_color="#333333"
-        )
-
-        title.place(relx=0.5, rely=0.5, anchor="center")
-
-        text_label = ctk.CTkLabel(
-            dialog,
-            text="Сохранить изменения",
-            font=("Arial", 20),
-            text_color="#444444"
-        )
-
-        text_label.pack(pady=35)
-
-        bottom = ctk.CTkFrame(
-            dialog,
-            height=45,
-            fg_color="#D6C79A",
-            corner_radius=0
-        )
-
-        bottom.pack(side="bottom", fill="x")
-
-        save_btn = ctk.CTkButton(
-            bottom,
-            text="Сохранить",
-            width=125,
-            height=45,
-            fg_color="#D6C79A",
-            hover_color="#C7B887",
-            text_color="#555555",
-            corner_radius=0,
-            command=lambda: self.create_new_row(dialog)
-        )
-
-        save_btn.pack(side="left")
-
-        separator = tk.Frame(
-            bottom,
-            width=1,
-            bg="#8F845D"
-        )
-
-        separator.pack(side="left", fill="y")
-
-        cancel_btn = ctk.CTkButton(
-            bottom,
-            text="Отмена",
-            width=125,
-            height=45,
-            fg_color="#D6C79A",
-            hover_color="#C7B887",
-            text_color="#777777",
-            corner_radius=0,
-            command=dialog.destroy
-        )
-
-        cancel_btn.pack(side="left")
-
-    # ==========================================
-    # ОКНО РЕДАКТИРОВАНИЯ
+    # РЕДАКТИРОВАНИЕ
     # ==========================================
 
     def show_edit_dialog(self, row):
 
-        dialog = ctk.CTkToplevel(self)
-
-        dialog.geometry("250x186")
-        dialog.resizable(False, False)
-        dialog.title("Редактирование")
-
-        dialog.configure(fg_color="#DDD0A4")
-
-        header = ctk.CTkFrame(
-            dialog,
-            height=38,
-            fg_color="#C7A545",
-            corner_radius=0
+        self.create_dialog(
+            "Редактировать",
+            "Сохранить изменения",
+            "Сохранить",
+            lambda d: self.enable_row_editing(row, d)
         )
-
-        header.pack(fill="x")
-
-        title = ctk.CTkLabel(
-            header,
-            text="Редактировать",
-            font=("Arial", 24),
-            text_color="#333333"
-        )
-
-        title.place(relx=0.5, rely=0.5, anchor="center")
-
-        text_label = ctk.CTkLabel(
-            dialog,
-            text="Сохранить изменения",
-            font=("Arial", 20),
-            text_color="#444444"
-        )
-
-        text_label.pack(pady=40)
-
-        bottom = ctk.CTkFrame(
-            dialog,
-            height=45,
-            fg_color="#D6C79A",
-            corner_radius=0
-        )
-
-        bottom.pack(side="bottom", fill="x")
-
-        save_btn = ctk.CTkButton(
-            bottom,
-            text="Сохранить",
-            width=125,
-            height=45,
-            fg_color="#D6C79A",
-            hover_color="#C7B887",
-            text_color="#555555",
-            corner_radius=0,
-            command=lambda: self.enable_row_editing(row, dialog)
-        )
-
-        save_btn.pack(side="left")
-
-        separator = tk.Frame(
-            bottom,
-            width=1,
-            bg="#8F845D"
-        )
-
-        separator.pack(side="left", fill="y")
-
-        cancel_btn = ctk.CTkButton(
-            bottom,
-            text="Отмена",
-            width=125,
-            height=45,
-            fg_color="#D6C79A",
-            hover_color="#C7B887",
-            text_color="#777777",
-            corner_radius=0,
-            command=dialog.destroy
-        )
-
-        cancel_btn.pack(side="left")
-
-    # ==========================================
-    # ВКЛЮЧИТЬ РЕДАКТИРОВАНИЕ
-    # ==========================================
 
     def enable_row_editing(self, row, dialog):
 
@@ -627,108 +617,17 @@ class DashboardFrame(ctk.CTkFrame):
         dialog.destroy()
 
     # ==========================================
-    # ОКНО УДАЛЕНИЯ
+    # УДАЛЕНИЕ
     # ==========================================
 
     def show_delete_dialog(self, row):
 
-        dialog = ctk.CTkToplevel(self)
-
-        dialog.geometry("250x186")
-        dialog.resizable(False, False)
-        dialog.title("Удаление")
-
-        dialog.configure(fg_color="#DDD0A4")
-
-        # HEADER
-
-        header = ctk.CTkFrame(
-            dialog,
-            height=38,
-            fg_color="#C7A545",
-            corner_radius=0
+        self.create_dialog(
+            "Удалить",
+            "Удалить информацию",
+            "Удалить",
+            lambda d: self.delete_row(row, d)
         )
-
-        header.pack(fill="x")
-
-        title = ctk.CTkLabel(
-            header,
-            text="Удалить",
-            font=("Arial", 24),
-            text_color="#333333"
-        )
-
-        title.place(relx=0.5, rely=0.5, anchor="center")
-
-      
-
-        # ТЕКСТ
-
-        text_label = ctk.CTkLabel(
-            dialog,
-            text="Удалить информацию",
-            font=("Arial", 20),
-            text_color="#444444"
-        )
-
-        text_label.pack(pady=(0, 60))
-
-        # НИЖНЯЯ ПАНЕЛЬ
-
-        bottom = ctk.CTkFrame(
-            dialog,
-            height=45,
-            fg_color="#D6C79A",
-            corner_radius=0
-        )
-
-        bottom.pack(side="bottom", fill="x")
-
-        # УДАЛИТЬ
-
-        delete_btn = ctk.CTkButton(
-            bottom,
-            text="Удалить",
-            width=125,
-            height=45,
-            fg_color="#D6C79A",
-            hover_color="#C7B887",
-            text_color="#555555",
-            corner_radius=0,
-            command=lambda: self.delete_row(row, dialog)
-        )
-
-        delete_btn.pack(side="left")
-
-        # РАЗДЕЛИТЕЛЬ
-
-        separator = tk.Frame(
-            bottom,
-            width=1,
-            bg="#8F845D"
-        )
-
-        separator.pack(side="left", fill="y")
-
-        # ОТМЕНА
-
-        cancel_btn = ctk.CTkButton(
-            bottom,
-            text="Отмена",
-            width=125,
-            height=45,
-            fg_color="#D6C79A",
-            hover_color="#C7B887",
-            text_color="#777777",
-            corner_radius=0,
-            command=dialog.destroy
-        )
-
-        cancel_btn.pack(side="left")
-
-    # ==========================================
-    # УДАЛЕНИЕ СТРОКИ
-    # ==========================================
 
     def delete_row(self, row, dialog):
 
@@ -743,14 +642,15 @@ class DashboardFrame(ctk.CTkFrame):
         dialog.destroy()
 
     # ==========================================
-    # ОКНО ИНФОРМАЦИИ
+    # ИНФОРМАЦИЯ
     # ==========================================
 
     def show_info(self, row):
 
         info_window = ctk.CTkToplevel(self)
 
-        info_window.geometry("467x610")
+        self.center_window(info_window, 467, 610)
+
         info_window.title("Информация")
         info_window.configure(fg_color="#D4B45F")
 
@@ -801,80 +701,6 @@ class DashboardFrame(ctk.CTkFrame):
         )
 
         close_btn.place(x=420, y=10)
-
-        line = tk.Frame(
-            info_window,
-            bg="#9E7B27",
-            height=1
-        )
-
-        line.pack(fill="x")
-
-        content = ctk.CTkFrame(
-            info_window,
-            fg_color="#D4B45F",
-            corner_radius=0
-        )
-
-        content.pack(fill="both", expand=True)
-
-        desc_title = ctk.CTkLabel(
-            content,
-            text="Описание:",
-            font=("Arial", 22),
-            text_color="black"
-        )
-
-        desc_title.pack(anchor="w", padx=20, pady=(22, 10))
-
-        desc_textbox = ctk.CTkTextbox(
-            content,
-            width=400,
-            height=200,
-            fg_color="#D4B45F",
-            text_color="black",
-            border_width=0,
-            font=("Arial", 16)
-        )
-
-        desc_textbox.pack(
-            padx=20,
-            fill="x"
-        )
-
-        separator = tk.Frame(
-            content,
-            bg="#9E7B27",
-            height=1
-        )
-
-        separator.pack(fill="x", padx=20, pady=28)
-
-        teacher_title = ctk.CTkLabel(
-            content,
-            text="Преподаватели:",
-            font=("Arial", 22),
-            text_color="black"
-        )
-
-        teacher_title.pack(anchor="w", padx=20, pady=(0, 15))
-
-        teachers_textbox = ctk.CTkTextbox(
-            content,
-            width=400,
-            height=120,
-            fg_color="#D4B45F",
-            text_color="black",
-            border_width=0,
-            font=("Arial", 16)
-        )
-
-        teachers_textbox.pack(
-            padx=20,
-            pady=(0, 20),
-            fill="x"
-        )
-
 
 # ==========================================
 # ЗАПУСК
