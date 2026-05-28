@@ -35,12 +35,12 @@ def update_data(table, record_id, column, new_value):
     conn.close()
 
 
-def get_data(table, record_id=None):
+def get_data(table, record_id=None, columns = ['*']):
     conn = get_connection()
     cursor = conn.cursor()
     
     if record_id is not None:
-        query = f"SELECT * FROM {table} WHERE id = ?"
+        query = f"SELECT {columns} FROM {table} WHERE id = ?"
         cursor.execute(query, (record_id,))
         result = cursor.fetchone()
     else:
