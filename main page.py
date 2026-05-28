@@ -10,7 +10,6 @@ import os
 ctk.set_appearance_mode("light")
 ctk.set_default_color_theme("blue")
 
-
 # ==========================================
 # ГЛАВНОЕ ОКНО
 # ==========================================
@@ -22,7 +21,7 @@ class App(ctk.CTk):
 
         self.title("Practices Awareness")
         self.geometry("1280x910")
-        self.minsize(1000, 700)
+        self.minsize(700, 500)
 
         self.configure(fg_color="#E9DCB0")
 
@@ -103,7 +102,6 @@ class App(ctk.CTk):
         dashboard = DashboardFrame(self)
         dashboard.pack(fill="both", expand=True)
 
-
 # ==========================================
 # DASHBOARD
 # ==========================================
@@ -130,7 +128,7 @@ class DashboardFrame(ctk.CTkFrame):
         top_bar.pack_propagate(False)
 
         # ==========================================
-        # ИКОНКА ВЫХОДА
+        # КНОПКА ВЫХОДА
         # ==========================================
 
         exit_path = "assets/exit.png"
@@ -168,11 +166,7 @@ class DashboardFrame(ctk.CTkFrame):
                 command=self.show_exit_dialog
             )
 
-        exit_btn.pack(
-            side="left",
-            padx=(10, 5),
-            pady=5
-        )
+        exit_btn.pack(side="left", padx=(10, 5), pady=5)
 
         # ==========================================
         # ЗАГОЛОВОК
@@ -188,7 +182,7 @@ class DashboardFrame(ctk.CTkFrame):
         title_label.pack(side="left", padx=10)
 
         # ==========================================
-        # ИКОНКА ДОБАВЛЕНИЯ
+        # КНОПКА СОЗДАНИЯ
         # ==========================================
 
         add_path = "assets/create.png"
@@ -226,29 +220,87 @@ class DashboardFrame(ctk.CTkFrame):
                 command=self.show_create_dialog
             )
 
-        add_btn.pack(
-            side="right",
-            padx=15
+        add_btn.pack(side="right", padx=15)
+
+        # ==========================================
+        # ОБЛАСТЬ ПРОКРУТКИ
+        # ==========================================
+
+        container = tk.Frame(self, bg="#DCCB98")
+        container.pack(fill="both", expand=True, padx=20, pady=20)
+
+        self.canvas = tk.Canvas(
+            container,
+            bg="#E6D7A8",
+            highlightthickness=0
+        )
+
+        self.canvas.pack(side="left", fill="both", expand=True)
+
+        # ==========================================
+        # ВЕРТИКАЛЬНЫЙ СКРОЛЛ
+        # ==========================================
+
+        y_scrollbar = ctk.CTkScrollbar(
+            container,
+            orientation="vertical",
+            command=self.canvas.yview
+        )
+
+        y_scrollbar.pack(side="right", fill="y")
+
+        # ==========================================
+        # ГОРИЗОНТАЛЬНЫЙ СКРОЛЛ
+        # ==========================================
+
+        x_scrollbar = ctk.CTkScrollbar(
+            self,
+            orientation="horizontal",
+            command=self.canvas.xview
+        )
+
+        x_scrollbar.pack(fill="x", padx=20, pady=(0, 10))
+
+        self.canvas.configure(
+            yscrollcommand=y_scrollbar.set,
+            xscrollcommand=x_scrollbar.set
         )
 
         # ==========================================
         # ТАБЛИЦА
         # ==========================================
 
-        table_frame = ctk.CTkScrollableFrame(
-            self,
+        self.table_frame = ctk.CTkFrame(
+            self.canvas,
             fg_color="#E6D7A8",
             corner_radius=15
         )
 
-        table_frame.pack(
-            fill="both",
-            expand=True,
-            padx=20,
-            pady=20
+        self.canvas_window = self.canvas.create_window(
+            (0, 0),
+            window=self.table_frame,
+            anchor="nw"
         )
 
-        self.table_frame = table_frame
+        self.table_frame.bind(
+            "<Configure>",
+            self.update_scrollregion
+        )
+
+        self.canvas.bind(
+            "<Configure>",
+            self.resize_canvas
+        )
+
+        self.canvas.bind_all(
+            "<MouseWheel>",
+            self.mouse_wheel
+        )
+
+        # ==========================================
+        # ТАБЛИЦА
+        # ==========================================
+
         self.current_row = 1
 
         columns = [
@@ -262,7 +314,7 @@ class DashboardFrame(ctk.CTkFrame):
             ""
         ]
 
-        widths = [180, 220, 220, 150, 150, 220, 220, 120]
+        widths = [250, 300, 300, 180, 180, 250, 250, 140]
 
         # ==========================================
         # ЗАГОЛОВКИ
@@ -271,13 +323,14 @@ class DashboardFrame(ctk.CTkFrame):
         for i, col in enumerate(columns):
 
             header = ctk.CTkLabel(
-                table_frame,
+                self.table_frame,
                 text=col,
                 font=("Arial", 18, "bold"),
                 text_color="#2B2B2B",
                 fg_color="#D9C998",
                 corner_radius=0,
-                height=45
+                height=45,
+                width=widths[i]
             )
 
             header.grid(
@@ -288,19 +341,56 @@ class DashboardFrame(ctk.CTkFrame):
                 ipady=10
             )
 
-            table_frame.grid_columnconfigure(
+            self.table_frame.grid_columnconfigure(
                 i,
-                weight=1,
+                weight=0,
                 minsize=widths[i]
             )
 
+        # ==========================================
         # СТАРТОВЫЕ СТРОКИ
+        # ==========================================
 
         for _ in range(10):
             self.create_row()
 
     # ==========================================
-    # СОЗДАНИЕ УВЕДОМЛЕНИЯ
+    # ОБНОВЛЕНИЕ ПРОКРУТКИ
+    # ==========================================
+
+    def update_scrollregion(self, event=None):
+
+        self.canvas.configure(
+            scrollregion=self.canvas.bbox("all")
+        )
+
+    # ==========================================
+    # ИЗМЕНЕНИЕ РАЗМЕРА
+    # ==========================================
+
+    def resize_canvas(self, event):
+
+        self.canvas.itemconfig(
+            self.canvas_window,
+            height=max(
+                event.height,
+                self.table_frame.winfo_reqheight()
+            )
+        )
+
+    # ==========================================
+    # ПРОКРУТКА МЫШКОЙ
+    # ==========================================
+
+    def mouse_wheel(self, event):
+
+        self.canvas.yview_scroll(
+            int(-1 * (event.delta / 120)),
+            "units"
+        )
+
+    # ==========================================
+    # УВЕДОМЛЕНИЕ
     # ==========================================
 
     def show_notification(self, text):
@@ -308,29 +398,33 @@ class DashboardFrame(ctk.CTkFrame):
         notification = ctk.CTkToplevel(self)
 
         notification.overrideredirect(True)
-        notification.configure(fg_color="#D8C07A")
+        notification.attributes("-topmost", True)
 
         width = 320
         height = 90
 
         self.update_idletasks()
 
-        main_x = self.winfo_rootx()
-        main_y = self.winfo_rooty()
-
-        main_width = self.winfo_width()
-        main_height = self.winfo_height()
-
-        x = main_x + (main_width // 2) - (width // 2)
-        y = main_y + (main_height // 2) - (height // 2)
+        x = self.winfo_rootx() + (self.winfo_width() // 2) - (width // 2)
+        y = self.winfo_rooty() + (self.winfo_height() // 2) - (height // 2)
 
         notification.geometry(f"{width}x{height}+{x}+{y}")
 
-        label = ctk.CTkLabel(
+        frame = ctk.CTkFrame(
             notification,
+            fg_color="#D8C07A",
+            corner_radius=20,
+            border_width=2,
+            border_color="#B08B37"
+        )
+
+        frame.pack(fill="both", expand=True)
+
+        label = ctk.CTkLabel(
+            frame,
             text=text,
-            font=("Arial", 24, "bold"),
-            text_color="#5A4A1F"
+            font=("Arial", 26, "bold"),
+            text_color="#5A4315"
         )
 
         label.pack(expand=True)
@@ -355,7 +449,9 @@ class DashboardFrame(ctk.CTkFrame):
                 fg_color="#E9DCB0",
                 corner_radius=0,
                 border_width=1,
-                border_color="#7A6A45"
+                border_color="#7A6A45",
+                width=200,
+                height=50
             )
 
             cell_frame.grid(
@@ -364,7 +460,9 @@ class DashboardFrame(ctk.CTkFrame):
                 sticky="nsew"
             )
 
+            # ==========================================
             # ПЕРВАЯ КОЛОНКА
+            # ==========================================
 
             if col == 0:
 
@@ -404,11 +502,15 @@ class DashboardFrame(ctk.CTkFrame):
 
                 self.row_entries[row].append(entry)
 
+            # ==========================================
             # ПОСЛЕДНЯЯ КОЛОНКА
+            # ==========================================
 
             elif col == columns_count - 1:
 
+                # ==========================================
                 # ИКОНКА РЕДАКТИРОВАНИЯ
+                # ==========================================
 
                 edit_path = "assets/edit.png"
 
@@ -453,7 +555,9 @@ class DashboardFrame(ctk.CTkFrame):
                     pady=5
                 )
 
+                # ==========================================
                 # ИКОНКА УДАЛЕНИЯ
+                # ==========================================
 
                 delete_path = "assets/delete.png"
 
@@ -498,7 +602,9 @@ class DashboardFrame(ctk.CTkFrame):
                     pady=5
                 )
 
+            # ==========================================
             # ОСТАЛЬНЫЕ КОЛОНКИ
+            # ==========================================
 
             else:
 
@@ -522,7 +628,7 @@ class DashboardFrame(ctk.CTkFrame):
         self.current_row += 1
 
     # ==========================================
-    # СОЗДАТЬ СТРОКУ
+    # СОЗДАНИЕ
     # ==========================================
 
     def show_create_dialog(self):
@@ -549,10 +655,13 @@ class DashboardFrame(ctk.CTkFrame):
         for widget in widgets:
             widget.destroy()
 
+        if row in self.row_entries:
+            del self.row_entries[row]
+
         self.show_notification("Удалено")
 
     # ==========================================
-    # ОКНО ВЫХОДА
+    # ВЫХОД
     # ==========================================
 
     def show_exit_dialog(self):
@@ -560,7 +669,7 @@ class DashboardFrame(ctk.CTkFrame):
         self.master.destroy()
 
     # ==========================================
-    # ОКНО ИНФОРМАЦИИ
+    # ИНФОРМАЦИЯ
     # ==========================================
 
     def show_info(self, row):
@@ -618,7 +727,6 @@ class DashboardFrame(ctk.CTkFrame):
         )
 
         close_btn.place(x=420, y=10)
-
 
 # ==========================================
 # ЗАПУСК
