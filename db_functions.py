@@ -44,7 +44,7 @@ def get_data(table, record_id=None, columns = ['*']):
         cursor.execute(query, (record_id,))
         result = cursor.fetchone()
     else:
-        query = f"SELECT * FROM {table}"
+        query = f"SELECT {columns} FROM {table}"
         cursor.execute(query)
         result = cursor.fetchall()
     
