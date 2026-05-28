@@ -140,14 +140,14 @@ class App(ctk.CTk):
         # Логотип справа
         try:
 
-            logo_path = "C:/Users/vostr/OneDrive/Desktop/Subtract1.png"
+            logo_path = "assets/logo.png"
 
             if os.path.exists(logo_path):
 
                 logo_image = Image.open(logo_path)
 
                 logo_image = logo_image.resize(
-                    (98, 45),
+                    (150, 150),
                     Image.LANCZOS
                 )
 
