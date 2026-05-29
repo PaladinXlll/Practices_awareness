@@ -1,3 +1,7 @@
+# ==========================================
+# IMPORT
+# ==========================================
+
 import customtkinter as ctk
 import tkinter as tk
 from PIL import Image, ImageTk
@@ -69,7 +73,7 @@ class App(ctk.CTk):
         logo2.pack(anchor="w", padx=(90, 0))
 
         # ==========================================
-        # ЛОГОТИП СПРАВА
+        # ЛОГОТИП
         # ==========================================
 
         try:
@@ -79,7 +83,7 @@ class App(ctk.CTk):
             if os.path.exists(image_path):
 
                 image = Image.open(image_path)
-                image = image.resize((150, 150))
+                image = image.resize((145, 145))
 
                 self.logo_image = ImageTk.PhotoImage(image)
 
@@ -319,24 +323,74 @@ class DashboardFrame(ctk.CTkFrame):
 
         for i, col in enumerate(columns):
 
-            header = ctk.CTkLabel(
+            header_frame = ctk.CTkFrame(
                 self.table_frame,
-                text=col,
-                font=("Arial", 18, "bold"),
-                text_color="#2B2B2B",
                 fg_color="#D9C998",
                 corner_radius=0,
-                height=45,
-                width=widths[i]
+                width=widths[i],
+                height=50
             )
 
-            header.grid(
+            header_frame.grid(
                 row=0,
                 column=i,
-                sticky="nsew",
-                ipadx=10,
-                ipady=10
+                sticky="nsew"
             )
+
+            header_frame.pack_propagate(False)
+
+            # ==========================================
+            # ФИЛЬТР СЛЕВА ОТ "Название"
+            # ==========================================
+
+            if i == 0:
+
+                filter_path = "assets/filter.png"
+
+                if os.path.exists(filter_path):
+
+                    filter_image = Image.open(filter_path)
+
+                    self.filter_icon = ctk.CTkImage(
+                        light_image=filter_image,
+                        dark_image=filter_image,
+                        size=(22, 22)
+                    )
+
+                    filter_btn = ctk.CTkButton(
+                        header_frame,
+                        image=self.filter_icon,
+                        text="",
+                        width=28,
+                        height=28,
+                        fg_color="transparent",
+                        hover_color="#C8B57E"
+                    )
+
+                    filter_btn.pack(
+                        side="left",
+                        padx=(8, 5)
+                    )
+
+                header = ctk.CTkLabel(
+                    header_frame,
+                    text=col,
+                    font=("Arial", 18, "bold"),
+                    text_color="#2B2B2B"
+                )
+
+                header.pack(side="left")
+
+            else:
+
+                header = ctk.CTkLabel(
+                    header_frame,
+                    text=col,
+                    font=("Arial", 18, "bold"),
+                    text_color="#2B2B2B"
+                )
+
+                header.pack(expand=True)
 
             self.table_frame.grid_columnconfigure(
                 i,
@@ -596,7 +650,7 @@ class DashboardFrame(ctk.CTkFrame):
         self.current_row += 1
 
     # ==========================================
-    # УВЕДОМЛЕНИЯ
+    # DIALOG
     # ==========================================
 
     def custom_dialog(self, title, text, confirm_text, command):
@@ -608,8 +662,6 @@ class DashboardFrame(ctk.CTkFrame):
         dialog.title(title)
 
         dialog.grab_set()
-
-        # HEADER
 
         header = ctk.CTkFrame(
             dialog,
@@ -629,8 +681,6 @@ class DashboardFrame(ctk.CTkFrame):
 
         header_label.pack(expand=True)
 
-        # TEXT
-
         text_label = ctk.CTkLabel(
             dialog,
             text=text,
@@ -640,8 +690,6 @@ class DashboardFrame(ctk.CTkFrame):
         )
 
         text_label.pack(expand=True)
-
-        # BUTTONS
 
         buttons = ctk.CTkFrame(
             dialog,
@@ -699,8 +747,8 @@ class DashboardFrame(ctk.CTkFrame):
 
         self.custom_dialog(
             "Редактировать",
-            "Сохранить изменения",
-            "Сохранить",
+            "Начать редактирование",
+            "Начать",
             lambda: None
         )
 
