@@ -1,0 +1,43 @@
+from backend.db_functions import (
+    delete_data,
+    update_data,
+    get_data
+)
+
+def test_get():
+    try:
+        data = get_data("users")
+        print("Полученные данные:")
+        print(data)
+    except Exception as e:
+        print("Ошибка при получении данных:", e)
+
+def test_update():
+    try:
+        update_data(
+            table="users",
+            record_id=1,
+            column="password",
+            new_value="new_password"
+        )
+        print("Изменение работает")
+    except Exception as e:
+        print("Ошибка при изменении:", e)
+
+def test_delete():
+    try:
+        delete_data("users", 1)
+        print("Удаление работает")
+    except Exception as e:
+        print("Ошибка при удалении:", e)
+
+if __name__ == "__main__":
+
+    print("\n--- Проверка получения данных ---")
+    test_get()
+
+    print("\n--- Проверка изменения ---")
+    test_update()
+
+    print("\n--- Проверка удаления ---")
+    test_delete()
