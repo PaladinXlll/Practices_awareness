@@ -1,4 +1,4 @@
-from backend.database import get_connection #сдесь ссылка на бд
+from database import get_connection #сдесь ссылка на бд
 from pymysql import Error
 
 def add_data(table, values):
@@ -38,7 +38,7 @@ def update_data(table, record_id, column, new_value):
 def get_data(table, record_id=None, columns = ['*']):
     conn = get_connection()
     cursor = conn.cursor()
-    
+
     if record_id is not None:
         query = f"SELECT {columns} FROM {table} WHERE id = ?"
         cursor.execute(query, (record_id,))
@@ -47,10 +47,10 @@ def get_data(table, record_id=None, columns = ['*']):
         query = f"SELECT {columns} FROM {table}"
         cursor.execute(query)
         result = cursor.fetchall()
-    
+
     conn.close()
     return result
-    
+
 def authorize_user(login_input, password_input):
     connection = get_connection()
     if not connection:
@@ -62,7 +62,7 @@ def authorize_user(login_input, password_input):
         query = "SELECT id, login, role FROM users WHERE login = %s AND password = %s"
         cursor.execute(query, (login_input, password_input))
         user = cursor.fetchall()
-       
+
 
         if user:
             print("\n Успешная авторизация!")
@@ -80,4 +80,4 @@ def authorize_user(login_input, password_input):
         if cursor:
             cursor.close()
         if connection:
-            connection.close()    
+            connection.close()
