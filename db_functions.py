@@ -1,4 +1,5 @@
 from database import get_connection #сдесь ссылка на бд
+from pymysql import Error
 
 def add_data(table, values):
     conn = get_connection()
@@ -50,3 +51,33 @@ def get_data(table, record_id=None, columns = ['*']):
     conn.close()
     return result
     
+def authorize_user(login_input, password_input):
+    connection = get_connection()
+    if not connection:
+        return None
+
+    cursor = None
+    try:
+        cursor = connection.cursor()
+        query = "SELECT id, login, role FROM users WHERE login = %s AND password = %s"
+        cursor.execute(query, (login_input, password_input))
+        user = cursor.fetchall()
+       
+
+        if user:
+            print("\n Успешная авторизация!")
+            print(f"Добро пожаловать! ID: {user['id']}, Роль: {user['role']}")
+            return user
+        else:
+            print("\n Ошибка: Неверный логин или пароль.")
+            return None
+
+    except Error as e:
+        print(f"\n Ошибка при выполнении SQL-запроса: {e}")
+        return None
+
+    finally:
+        if cursor:
+            cursor.close()
+        if connection:
+            connection.close()    
