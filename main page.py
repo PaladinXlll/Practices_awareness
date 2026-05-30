@@ -1,7 +1,3 @@
-# ==========================================
-# IMPORT
-# ==========================================
-
 import customtkinter as ctk
 import tkinter as tk
 from PIL import Image, ImageTk
