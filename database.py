@@ -1,18 +1,28 @@
-import mysql.connector
-from mysql.connector import Error
+import pymysql
+from pymysql import Error
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
+DATABASE=os.getenv("DATABASE")
+USER=os.getenv("LOGIN")
+PASSWORD=os.getenv("PASSWORD")
 
 db_config = {
-    'host': 'localhost',
-    'user': 'root',
-    'password': 'your_db_password',
-    'database': 'your_database'
+    'host': '192.168.200.18',
+    'port': 3306,
+    'user': USER,
+    'password': PASSWORD,
+    'database': DATABASE,
+    'ssl': None
 }
 
 def get_connection():
     try:
-        connection = mysql.connector.connect(**db_config)
+        connection = pymysql.connect(**db_config)
         if connection.is_connected():
             return connection
     except Error as e:
         print(f"️ Ошибка подключения к MySQL: {e}")
         return None
+get_connection()
