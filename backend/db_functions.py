@@ -1,4 +1,4 @@
-from database import get_connection #сдесь ссылка на бд
+from backend.database import get_connection #сдесь ссылка на бд
 from pymysql import Error
 
 def add_data(table, values):

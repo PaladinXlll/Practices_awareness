@@ -1,4 +1,4 @@
-from db_functions import authorize_user
+from backend.db_functions import authorize_user
 
 
 
