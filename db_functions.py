@@ -66,7 +66,7 @@ def authorize_user(login_input, password_input):
 
         if user:
             print("\n Успешная авторизация!")
-            print(f"Добро пожаловать! ID: {user['id']}, Роль: {user['role']}")
+            print(f"Добро пожаловать! ID: {user[0]['id']}, Роль: {user[0]['role']}")
             return user
         else:
             print("\n Ошибка: Неверный логин или пароль.")

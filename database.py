@@ -15,7 +15,7 @@ db_config = {
     'password': PASSWORD,
     'database': DATABASE,
     'ssl_disabled': True,
-    'cursorclass': 'pymysql.cursors.DictCursor'
+    'cursorclass': pymysql.cursors.DictCursor
 }
 
 def get_connection():
