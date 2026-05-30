@@ -14,14 +14,15 @@ db_config = {
     'user': USER,
     'password': PASSWORD,
     'database': DATABASE,
-    'ssl': None
+    'ssl_disabled': True,
+    'cursorclass': 'pymysql.cursors.DictCursor'
 }
 
 def get_connection():
     try:
         connection = pymysql.connect(**db_config)
-        if connection.is_connected():
-            return connection
+        print('Подключено')
+        return connection
     except Error as e:
         print(f"️ Ошибка подключения к MySQL: {e}")
         return None
