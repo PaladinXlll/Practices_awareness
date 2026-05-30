@@ -12,7 +12,6 @@ def add_data(table, values):
     conn.commit()
     conn.close()
 
-
 def delete_data(table, record_id):
     conn = get_connection()
     cursor = conn.cursor()
