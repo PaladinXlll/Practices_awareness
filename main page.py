@@ -54,7 +54,7 @@ class App(ctk.CTk):
             logo_frame,
             text="PRACTICES",
             text_color="white",
-            font=("Arial", 32, "bold")
+            font=("Bayon", 32, "bold")
         )
 
         logo1.pack(anchor="w")
@@ -63,7 +63,7 @@ class App(ctk.CTk):
             logo_frame,
             text="AWARENESS",
             text_color="white",
-            font=("Arial", 32, "bold")
+            font=("Bayon", 32, "bold")
         )
 
         logo2.pack(anchor="w", padx=(90, 0))
@@ -163,7 +163,7 @@ class DashboardFrame(ctk.CTkFrame):
                 fg_color="transparent",
                 hover_color="#C8B57E",
                 text_color="black",
-                font=("Arial", 24),
+                font=("Advent Pro", 24),
                 command=self.show_exit_dialog
             )
 
@@ -176,7 +176,7 @@ class DashboardFrame(ctk.CTkFrame):
         title_label = ctk.CTkLabel(
             top_bar,
             text="Главная страница",
-            font=("Arial", 28, "bold"),
+            font=("Advent Pro", 28, "bold"),
             text_color="black"
         )
 
@@ -371,7 +371,7 @@ class DashboardFrame(ctk.CTkFrame):
                 header = ctk.CTkLabel(
                     header_frame,
                     text=col,
-                    font=("Arial", 18, "bold"),
+                    font=("Advent Pro", 18, "bold"),
                     text_color="#2B2B2B"
                 )
 
@@ -382,7 +382,7 @@ class DashboardFrame(ctk.CTkFrame):
                 header = ctk.CTkLabel(
                     header_frame,
                     text=col,
-                    font=("Arial", 18, "bold"),
+                    font=("Advent Pro", 18, "bold"),
                     text_color="#2B2B2B"
                 )
 
@@ -496,7 +496,7 @@ class DashboardFrame(ctk.CTkFrame):
                         fg_color="transparent",
                         hover_color="#D5C28E",
                         text_color="black",
-                        font=("Arial", 18),
+                        font=("Advent Pro", 18),
                         command=lambda r=row: self.show_info(r)
                     )
 
@@ -511,7 +511,7 @@ class DashboardFrame(ctk.CTkFrame):
                     fg_color="#E9DCB0",
                     border_width=0,
                     text_color="black",
-                    font=("Arial", 18)
+                    font=("Advent Pro", 18)
                 )
 
                 entry.pack(
@@ -567,7 +567,7 @@ class DashboardFrame(ctk.CTkFrame):
                         fg_color="transparent",
                         hover_color="#D5C28E",
                         text_color="black",
-                        font=("Arial", 18),
+                        font=("Advent Pro", 18),
                         command=lambda r=row: self.edit_row(r)
                     )
 
@@ -614,7 +614,7 @@ class DashboardFrame(ctk.CTkFrame):
                         fg_color="transparent",
                         hover_color="#D5C28E",
                         text_color="black",
-                        font=("Arial", 18),
+                        font=("Advent Pro", 18),
                         command=lambda r=row: self.delete_row(r)
                     )
 
@@ -631,7 +631,7 @@ class DashboardFrame(ctk.CTkFrame):
                     fg_color="#E9DCB0",
                     border_width=0,
                     text_color="black",
-                    font=("Arial", 18)
+                    font=("Advent Pro", 18)
                 )
 
                 entry.pack(
@@ -671,7 +671,7 @@ class DashboardFrame(ctk.CTkFrame):
         header_label = ctk.CTkLabel(
             header,
             text=title,
-            font=("Arial", 16),
+            font=("Advent Pro", 16),
             text_color="black"
         )
 
@@ -680,7 +680,7 @@ class DashboardFrame(ctk.CTkFrame):
         text_label = ctk.CTkLabel(
             dialog,
             text=text,
-            font=("Arial", 14),
+            font=("Advent Pro", 14),
             text_color="#444444",
             wraplength=200
         )
@@ -812,7 +812,7 @@ class DashboardFrame(ctk.CTkFrame):
         icon_label = ctk.CTkLabel(
             header,
             text="ⓘ",
-            font=("Arial", 30),
+            font=("Advent Pro", 30),
             text_color="black"
         )
 
@@ -825,7 +825,7 @@ class DashboardFrame(ctk.CTkFrame):
             fg_color="#C9A646",
             border_width=0,
             text_color="black",
-            font=("Arial", 22)
+            font=("Advent Pro", 22)
         )
 
         title_entry.place(x=70, y=20)
@@ -838,7 +838,7 @@ class DashboardFrame(ctk.CTkFrame):
             fg_color="transparent",
             hover_color="#B89435",
             text_color="black",
-            font=("Arial", 24),
+            font=("Advent Pro", 24),
             command=info_window.destroy
         )
 
