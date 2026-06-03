@@ -74,7 +74,7 @@ class App(ctk.CTk):
 
         try:
 
-            image_path = "assets/logo.png"
+            image_path = "frontend/assets/logo.png"
 
             if os.path.exists(image_path):
 
@@ -132,7 +132,7 @@ class DashboardFrame(ctk.CTkFrame):
         # ИКОНКА ВЫХОДА
         # ==========================================
 
-        exit_path = "assets/exit.png"
+        exit_path = "frontend/assets/exit.png"
 
         if os.path.exists(exit_path):
 
@@ -186,7 +186,7 @@ class DashboardFrame(ctk.CTkFrame):
         # КНОПКА СОЗДАНИЯ
         # ==========================================
 
-        add_path = "assets/create.png"
+        add_path = "frontend/assets/create.png"
 
         if os.path.exists(add_path):
 
@@ -341,7 +341,7 @@ class DashboardFrame(ctk.CTkFrame):
 
             if i == 0:
 
-                filter_path = "assets/filter.png"
+                filter_path = "frontend/assets/filter.png"
 
                 if os.path.exists(filter_path):
 
@@ -534,7 +534,7 @@ class DashboardFrame(ctk.CTkFrame):
                 # РЕДАКТИРОВАНИЕ
                 # ==========================================
 
-                edit_path = "assets/edit.png"
+                edit_path = "frontend/assets/edit.png"
 
                 if os.path.exists(edit_path):
 
@@ -581,7 +581,7 @@ class DashboardFrame(ctk.CTkFrame):
                 # УДАЛЕНИЕ
                 # ==========================================
 
-                delete_path = "assets/delete.png"
+                delete_path = "frontend/assets/delete.png"
 
                 if os.path.exists(delete_path):
 

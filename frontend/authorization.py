@@ -141,7 +141,7 @@ class App(ctk.CTk):
 
         try:
 
-            logo_path = "assets/logo.png"
+            logo_path = "frontend/assets/logo.png"
 
             if os.path.exists(logo_path):
 
