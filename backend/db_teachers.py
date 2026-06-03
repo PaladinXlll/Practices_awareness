@@ -3,11 +3,13 @@ from database import get_connection
 
 def add_teacher(surname, name, patronymic):
     conn = get_connection()
+    if conn is None:
+        return None
     cursor = conn.cursor()
 
     cursor.execute("""
         INSERT INTO teachers (surname, name, patronymic)
-        VALUES (?, ?, ?)
+        VALUES (%s, %s, %s)
     """, (surname, name, patronymic))
 
     conn.commit()
@@ -16,14 +18,16 @@ def add_teacher(surname, name, patronymic):
 
 def update_teacher(teacher_id, surname, name, patronymic):
     conn = get_connection()
+    if conn is None:
+        return None
     cursor = conn.cursor()
 
     cursor.execute("""
         UPDATE teachers
-        SET surname = ?,
-            name = ?,
-            patronymic = ?
-        WHERE id = ?
+        SET surname = %s,
+            name = %s,
+            patronymic = %s
+        WHERE teacher_id = %s
     """, (surname, name, patronymic, teacher_id))
 
     conn.commit()
@@ -32,11 +36,13 @@ def update_teacher(teacher_id, surname, name, patronymic):
 
 def delete_teacher(teacher_id):
     conn = get_connection()
+    if conn is None:
+        return None
     cursor = conn.cursor()
 
     cursor.execute("""
         DELETE FROM teachers
-        WHERE id = ?
+        WHERE teacher_id = %s
     """, (teacher_id,))
 
     conn.commit()
@@ -45,10 +51,12 @@ def delete_teacher(teacher_id):
 
 def get_teachers():
     conn = get_connection()
+    if conn is None:
+        return None
     cursor = conn.cursor()
 
     cursor.execute("""
-        SELECT id,
+        SELECT teacher_id,
                surname,
                name,
                patronymic
@@ -72,3 +80,5 @@ def validate_teacher(surname, name, patronymic):
         return False, "Не заполнено отчество"
 
     return True, ""
+
+print(get_teachers())
