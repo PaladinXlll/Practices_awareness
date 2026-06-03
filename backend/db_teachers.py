@@ -61,7 +61,7 @@ def get_teachers():
                name,
                patronymic
         FROM teachers
-        ORDER BY surname, name
+        ORDER BY teacher_id
     """)
 
     teachers = cursor.fetchall()
@@ -81,4 +81,4 @@ def validate_teacher(surname, name, patronymic):
 
     return True, ""
 
-print(get_teachers())
+print(add_teacher("Фронзовна", "Мария", "Елисеевич"))
