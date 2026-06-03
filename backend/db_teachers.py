@@ -3,8 +3,10 @@ from database import get_connection
 
 def add_teacher(surname, name, patronymic):
     conn = get_connection()
+
     if conn is None:
         return None
+
     cursor = conn.cursor()
 
     cursor.execute("""
@@ -15,11 +17,15 @@ def add_teacher(surname, name, patronymic):
     conn.commit()
     conn.close()
 
+    print("Преподаватель добавлен")
+
 
 def update_teacher(teacher_id, surname, name, patronymic):
     conn = get_connection()
+
     if conn is None:
         return None
+
     cursor = conn.cursor()
 
     cursor.execute("""
@@ -30,14 +36,21 @@ def update_teacher(teacher_id, surname, name, patronymic):
         WHERE teacher_id = %s
     """, (surname, name, patronymic, teacher_id))
 
+    if cursor.rowcount == 0:
+        print("Преподаватель с таким ID не найден")
+    else:
+        print("Данные преподавателя обновлены")
+
     conn.commit()
     conn.close()
 
 
 def delete_teacher(teacher_id):
     conn = get_connection()
+
     if conn is None:
         return None
+
     cursor = conn.cursor()
 
     cursor.execute("""
@@ -45,14 +58,21 @@ def delete_teacher(teacher_id):
         WHERE teacher_id = %s
     """, (teacher_id,))
 
+    if cursor.rowcount == 0:
+        print("Преподаватель с таким ID не найден")
+    else:
+        print("Преподаватель удалён")
+
     conn.commit()
     conn.close()
 
 
 def get_teachers():
     conn = get_connection()
+
     if conn is None:
         return None
+
     cursor = conn.cursor()
 
     cursor.execute("""
@@ -67,7 +87,9 @@ def get_teachers():
     teachers = cursor.fetchall()
 
     conn.close()
+
     return teachers
+
 
 def validate_teacher(surname, name, patronymic):
     if not surname.strip():
@@ -79,6 +101,8 @@ def validate_teacher(surname, name, patronymic):
     if not patronymic.strip():
         return False, "Не заполнено отчество"
 
-    return True, ""
+    return True, "Все данные заполнены"
 
-print(add_teacher("Фронзовна", "Мария", "Елисеевич"))
+
+if __name__ == "__main__":
+    print(get_teachers())
