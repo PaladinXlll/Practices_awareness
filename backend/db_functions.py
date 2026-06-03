@@ -1,113 +1,121 @@
-from database import get_connection  # ссылка на БД
+from database import get_connection
 from pymysql import Error
 
-# Разрешённые таблицы
+
 ALLOWED_TABLES = {
     "users",
-    "products",
-    "orders"
+    "teachers",
+    "events",
+    "level",
+    "type",
+    "control",
+    "teachers_events"
 }
 
-# Разрешённые колонки для каждой таблицы
+
 ALLOWED_COLUMNS = {
     "users": {"id", "login", "password", "role"},
-    "products": {"id", "name", "price"},
-    "orders": {"id", "status"}
+
+    "teachers": {"teacher_id", "name", "surname", "patronymic"},
+
+    "events": {
+        "event_id",
+        "name",
+        "place",
+        "level",
+        "event_date",
+        "document",
+        "type",
+        "control",
+        "description"
+    },
+
+    "level": {"level_id", "name"},
+    "type": {"type_id", "name"},
+    "control": {"control_id", "name"},
+    "teachers_events": {"teacher", "event"}
 }
 
 
-def add_data(table, values):
+PRIMARY_KEYS = {
+    "users": "id",
+    "teachers": "teacher_id",
+    "events": "event_id",
+    "level": "level_id",
+    "type": "type_id",
+    "control": "control_id"
+}
+
+
+def check_sql_safety(table, columns=None):
+    """
+    Первая защита от SQL-инъекций:
+    проверяем, что таблица и колонки есть в белом списке.
+    """
+
     if table not in ALLOWED_TABLES:
         raise ValueError(f"Недопустимая таблица: {table}")
+
+    if columns is not None:
+        allowed_columns = ALLOWED_COLUMNS.get(table, set())
+
+        for column in columns:
+            if column not in allowed_columns:
+                raise ValueError(f"Недопустимая колонка: {column}")
+
+    return True
+
+
+def get_primary_key(table):
+    check_sql_safety(table)
+
+    primary_key = PRIMARY_KEYS.get(table)
+
+    if primary_key is None:
+        raise ValueError(f"Для таблицы {table} не указан primary key")
+
+    return primary_key
+
+
+def execute_query(query, params=None, fetchone=False, fetchall=False, commit=False):
+    """
+    Вторая защита от SQL-инъекций:
+    значения передаются отдельно через params, а не вставляются в SQL строку.
+    """
 
     conn = None
     cursor = None
 
     try:
         conn = get_connection()
+
         if conn is None:
-            return False
+            return None
 
         cursor = conn.cursor()
 
-        placeholders = ", ".join(["%s"] * len(values))
-        query = f"INSERT INTO {table} VALUES (NULL, {placeholders})"
+        if params is None:
+            params = ()
 
-        cursor.execute(query, values)
-        conn.commit()
+        cursor.execute(query, params)
 
-        return True
+        result = None
 
-    except Error as e:
-        print(f"Ошибка SQL при добавлении данных: {e}")
-        return False
+        if fetchone:
+            result = cursor.fetchone()
 
-    finally:
-        if cursor:
-            cursor.close()
-        if conn:
-            conn.close()
+        if fetchall:
+            result = cursor.fetchall()
 
+        if commit:
+            conn.commit()
+            result = cursor.rowcount
 
-def delete_data(table, record_id):
-    if table not in ALLOWED_TABLES:
-        raise ValueError(f"Недопустимая таблица: {table}")
-
-    conn = None
-    cursor = None
-
-    try:
-        conn = get_connection()
-        if conn is None:
-            return False
-
-        cursor = conn.cursor()
-
-        query = f"DELETE FROM {table} WHERE id = %s"
-        cursor.execute(query, (record_id,))
-
-        conn.commit()
-
-        return True
+        return result
 
     except Error as e:
-        print(f"Ошибка SQL при удалении данных: {e}")
-        return False
-
-    finally:
-        if cursor:
-            cursor.close()
-        if conn:
-            conn.close()
-
-
-def update_data(table, record_id, column, new_value):
-    if table not in ALLOWED_TABLES:
-        raise ValueError(f"Недопустимая таблица: {table}")
-
-    if column not in ALLOWED_COLUMNS.get(table, set()):
-        raise ValueError(f"Недопустимая колонка: {column}")
-
-    conn = None
-    cursor = None
-
-    try:
-        conn = get_connection()
-        if conn is None:
-            return False
-
-        cursor = conn.cursor()
-
-        query = f"UPDATE {table} SET {column} = %s WHERE id = %s"
-
-        cursor.execute(query, (new_value, record_id))
-        conn.commit()
-
-        return True
-
-    except Error as e:
-        print(f"Ошибка SQL при обновлении данных: {e}")
-        return False
+        print(f"Ошибка SQL: {e}")
+        return None
 
     finally:
         if cursor:
@@ -117,90 +125,84 @@ def update_data(table, record_id, column, new_value):
 
 
 def get_data(table, record_id=None, columns=None):
-    if table not in ALLOWED_TABLES:
-        raise ValueError(f"Недопустимая таблица: {table}")
+    check_sql_safety(table, columns)
 
-    conn = None
-    cursor = None
+    primary_key = get_primary_key(table)
 
-    try:
-        conn = get_connection()
-        if conn is None:
-            return None
+    if columns:
+        columns_sql = ", ".join(columns)
+    else:
+        columns_sql = "*"
 
-        cursor = conn.cursor()
+    if record_id is not None:
+        query = f"SELECT {columns_sql} FROM {table} WHERE {primary_key} = %s"
+        return execute_query(query, (record_id,), fetchone=True)
 
-        if columns:
-            allowed_columns = ALLOWED_COLUMNS.get(table, set())
+    query = f"SELECT {columns_sql} FROM {table}"
+    return execute_query(query, fetchall=True)
 
-            for col in columns:
-                if col not in allowed_columns:
-                    raise ValueError(f"Недопустимая колонка: {col}")
 
-            columns_sql = ", ".join(columns)
-        else:
-            columns_sql = "*"
+def add_data(table, columns, values):
+    check_sql_safety(table, columns)
 
-        if record_id is not None:
-            query = f"SELECT {columns_sql} FROM {table} WHERE id = %s"
-            cursor.execute(query, (record_id,))
-            result = cursor.fetchone()
-        else:
-            query = f"SELECT {columns_sql} FROM {table}"
-            cursor.execute(query)
-            result = cursor.fetchall()
+    columns_sql = ", ".join(columns)
+    placeholders = ", ".join(["%s"] * len(values))
 
-        return result
+    query = f"""
+        INSERT INTO {table} ({columns_sql})
+        VALUES ({placeholders})
+    """
 
-    except Error as e:
-        print(f"Ошибка SQL при получении данных: {e}")
-        return None
+    return execute_query(query, values, commit=True)
 
-    finally:
-        if cursor:
-            cursor.close()
-        if conn:
-            conn.close()
+
+def update_data(table, record_id, update_values):
+    columns = list(update_values.keys())
+
+    check_sql_safety(table, columns)
+
+    primary_key = get_primary_key(table)
+
+    set_sql = ", ".join([f"{column} = %s" for column in columns])
+    values = list(update_values.values())
+    values.append(record_id)
+
+    query = f"""
+        UPDATE {table}
+        SET {set_sql}
+        WHERE {primary_key} = %s
+    """
+
+    return execute_query(query, values, commit=True)
+
+
+def delete_data(table, record_id):
+    check_sql_safety(table)
+
+    primary_key = get_primary_key(table)
+
+    query = f"DELETE FROM {table} WHERE {primary_key} = %s"
+
+    return execute_query(query, (record_id,), commit=True)
 
 
 def authorize_user(login_input, password_input):
-    connection = None
-    cursor = None
+    query = """
+        SELECT id, login, role
+        FROM users
+        WHERE login = %s AND password = %s
+    """
 
-    try:
-        connection = get_connection()
-        if not connection:
-            return None
+    user = execute_query(
+        query,
+        (login_input, password_input),
+        fetchone=True
+    )
 
-        cursor = connection.cursor()
+    if user:
+        print("\nУспешная авторизация!")
+        print(f"Добро пожаловать! ID: {user['id']}, Роль: {user['role']}")
+        return user
 
-        query = """
-            SELECT id, login, role
-            FROM users
-            WHERE login = %s AND password = %s
-        """
-
-        cursor.execute(query, (login_input, password_input))
-        user = cursor.fetchall()
-
-        if user:
-            print("\nУспешная авторизация!")
-            print(
-                f"Добро пожаловать! "
-                f"ID: {user[0]['id']}, "
-                f"Роль: {user[0]['role']}"
-            )
-            return user
-
-        print("\nОшибка: Неверный логин или пароль.")
-        return None
-
-    except Error as e:
-        print(f"\nОшибка при выполнении SQL-запроса: {e}")
-        return None
-
-    finally:
-        if cursor:
-            cursor.close()
-        if connection:
-            connection.close()
+    print("\nОшибка: Неверный логин или пароль.")
+    return None
