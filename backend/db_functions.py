@@ -3,9 +3,11 @@ from pymysql import Error
 
 def add_data(table, values):
     conn = get_connection()
+    if conn is None:
+        return None
     cursor = conn.cursor()
 
-    placeholders = ", ".join(["?"] * len(values))
+    placeholders = ", ".join(["%s"] * len(values))
     query = f"INSERT INTO {table} VALUES (NULL, {placeholders})"
 
     cursor.execute(query, values)
@@ -15,9 +17,11 @@ def add_data(table, values):
 
 def delete_data(table, record_id):
     conn = get_connection()
+    if conn is None:
+        return None
     cursor = conn.cursor()
 
-    query = f"DELETE FROM {table} WHERE id = ?"
+    query = f"DELETE FROM {table} WHERE id = %s"
     cursor.execute(query, (record_id,))
 
     conn.commit()
@@ -26,9 +30,11 @@ def delete_data(table, record_id):
 
 def update_data(table, record_id, column, new_value):
     conn = get_connection()
+    if conn is None:
+        return None
     cursor = conn.cursor()
 
-    query = f"UPDATE {table} SET {column} = ? WHERE id = ?"
+    query = f"UPDATE {table} SET {column} = %s WHERE id = %s"
     cursor.execute(query, (new_value, record_id))
 
     conn.commit()
@@ -37,10 +43,13 @@ def update_data(table, record_id, column, new_value):
 
 def get_data(table, record_id=None, columns = ['*']):
     conn = get_connection()
+    if conn is None:
+        return None
     cursor = conn.cursor()
 
+    columns = ", ".join(columns)
     if record_id is not None:
-        query = f"SELECT {columns} FROM {table} WHERE id = ?"
+        query = f"SELECT {columns} FROM {table} WHERE id = %s"
         cursor.execute(query, (record_id,))
         result = cursor.fetchone()
     else:
