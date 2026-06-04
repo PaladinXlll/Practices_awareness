@@ -5,7 +5,7 @@ from pymysql import Error
 ALLOWED_TABLES = {
     "users",
     "teachers",
-    "events",
+    "event",
     "level",
     "type",
     "control",
@@ -40,7 +40,7 @@ ALLOWED_COLUMNS = {
 PRIMARY_KEYS = {
     "users": "id",
     "teachers": "teacher_id",
-    "events": "event_id",
+    "event": "event_id",
     "level": "level_id",
     "type": "type_id",
     "control": "control_id"
@@ -48,11 +48,6 @@ PRIMARY_KEYS = {
 
 
 def check_sql_safety(table, columns=None):
-    """
-    Первая защита от SQL-инъекций:
-    проверяем, что таблица и колонки есть в белом списке.
-    """
-
     if table not in ALLOWED_TABLES:
         raise ValueError(f"Недопустимая таблица: {table}")
 
@@ -78,11 +73,6 @@ def get_primary_key(table):
 
 
 def execute_query(query, params=None, fetchone=False, fetchall=False, commit=False):
-    """
-    Вторая защита от SQL-инъекций:
-    значения передаются отдельно через params, а не вставляются в SQL строку.
-    """
-
     conn = None
     cursor = None
 
@@ -113,6 +103,10 @@ def execute_query(query, params=None, fetchone=False, fetchall=False, commit=Fal
 
         return result
 
+    except ValueError as e:
+        print(f"Ошибка безопасности SQL: {e}")
+        return None
+
     except Error as e:
         print(f"Ошибка SQL: {e}")
         return None
@@ -124,10 +118,17 @@ def execute_query(query, params=None, fetchone=False, fetchall=False, commit=Fal
             conn.close()
 
 
+def execute_select(query, params=None, fetchone=False):
+    return execute_query(
+        query=query,
+        params=params,
+        fetchone=fetchone,
+        fetchall=not fetchone
+    )
+
+
 def get_data(table, record_id=None, columns=None):
     check_sql_safety(table, columns)
-
-    primary_key = get_primary_key(table)
 
     if columns:
         columns_sql = ", ".join(columns)
@@ -135,6 +136,7 @@ def get_data(table, record_id=None, columns=None):
         columns_sql = "*"
 
     if record_id is not None:
+        primary_key = get_primary_key(table)
         query = f"SELECT {columns_sql} FROM {table} WHERE {primary_key} = %s"
         return execute_query(query, (record_id,), fetchone=True)
 
@@ -144,6 +146,9 @@ def get_data(table, record_id=None, columns=None):
 
 def add_data(table, columns, values):
     check_sql_safety(table, columns)
+
+    if len(columns) != len(values):
+        raise ValueError("Количество колонок не совпадает с количеством значений")
 
     columns_sql = ", ".join(columns)
     placeholders = ", ".join(["%s"] * len(values))
@@ -181,9 +186,54 @@ def delete_data(table, record_id):
 
     primary_key = get_primary_key(table)
 
-    query = f"DELETE FROM {table} WHERE {primary_key} = %s"
+    query = f"""
+        DELETE FROM {table}
+        WHERE {primary_key} = %s
+    """
 
     return execute_query(query, (record_id,), commit=True)
+
+
+def add_relation(table, first_column, second_column, first_id, second_id):
+    check_sql_safety(table, [first_column, second_column])
+
+    query = f"""
+        INSERT INTO {table} ({first_column}, {second_column})
+        VALUES (%s, %s)
+    """
+
+    return execute_query(query, (first_id, second_id), commit=True)
+
+
+def delete_relation(table, first_column, second_column, first_id, second_id):
+    check_sql_safety(table, [first_column, second_column])
+
+    query = f"""
+        DELETE FROM {table}
+        WHERE {first_column} = %s AND {second_column} = %s
+    """
+
+    return execute_query(query, (first_id, second_id), commit=True)
+
+
+def add_teacher_event(teacher_id, event_id):
+    return add_relation(
+        table="teachers_events",
+        first_column="teacher",
+        second_column="event",
+        first_id=teacher_id,
+        second_id=event_id
+    )
+
+
+def delete_teacher_event(teacher_id, event_id):
+    return delete_relation(
+        table="teachers_events",
+        first_column="teacher",
+        second_column="event",
+        first_id=teacher_id,
+        second_id=event_id
+    )
 
 
 def authorize_user(login_input, password_input):
