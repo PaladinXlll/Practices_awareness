@@ -1,9 +1,20 @@
 import tkinter as tk
 from tkinter import font as tkfont, simpledialog, messagebox
 from PIL import Image, ImageTk
+import customtkinter as ctk
 import os
 
-# Создаем главное окно с размерами 1280x910
+# ==========================================
+# ТЕМА ДЛЯ CUSTOMTKINTER
+# ==========================================
+
+ctk.set_appearance_mode("light")
+ctk.set_default_color_theme("blue")
+
+# ==========================================
+# ГЛАВНОЕ ОКНО
+# ==========================================
+
 root = tk.Tk()
 root.title("PRACTICES AWARENESS")
 root.geometry("1280x910")
@@ -225,7 +236,7 @@ def draw_table():
         if row == 0:
             font_style = ("Advent Pro", 25, "bold")
         else:
-            font_style = ("Advent Pro", 18)  # Увеличено с 14 на 18
+            font_style = ("Advent Pro", 18)
         
         if table_data[row][0]:
             main_canvas.create_text(
@@ -293,47 +304,59 @@ def update_layout(event=None):
     draw_table()
 
 # ==========================================
-# КОЗЫРЕК
+# КОЗЫРЕК (НОВЫЙ ИЗ CUSTOMTKINTER)
 # ==========================================
-canopy = tk.Frame(root, bg='#986722', height=99)
-canopy.place(x=0, y=0, width=1280, height=99)
+
+canopy = ctk.CTkFrame(
+    root,
+    height=99,
+    fg_color="#986722",
+    corner_radius=0
+)
+canopy.pack(fill="x")
 canopy.pack_propagate(False)
 
 # ==========================================
 # КОНТЕЙНЕР ДЛЯ ЛОГОТИПОВ
 # ==========================================
-header_frame = tk.Frame(canopy, bg='#986722')
+
+header_frame = ctk.CTkFrame(
+    canopy,
+    fg_color="transparent"
+)
 header_frame.pack(fill='both', expand=True)
 
-logo_frame = tk.Frame(header_frame, bg='#986722')
-logo_frame.pack(side="left", padx=20)
+logo_frame = ctk.CTkFrame(
+    header_frame,
+    fg_color="transparent"
+)
+logo_frame.pack(side="left", padx=20, pady=10)
 
-logo1 = tk.Label(
+logo1 = ctk.CTkLabel(
     logo_frame,
     text="PRACTICES",
-    fg="white",
-    bg='#986722',
-    font=("Bayon", 30, "bold")
+    text_color="white",
+    font=("Bayon", 32, "bold")
 )
 logo1.pack(anchor="w")
 
-logo2 = tk.Label(
+logo2 = ctk.CTkLabel(
     logo_frame,
     text="AWARENESS",
-    fg="white",
-    bg='#986722',
-    font=("Bayon", 30, "bold")
+    text_color="white",
+    font=("Bayon", 32, "bold")
 )
 logo2.pack(anchor="w", padx=(90, 0))
 
 # ==========================================
 # ЛОГОТИП КАРТИНКА
 # ==========================================
+
 try:
     logo_path = "frontend/assets/logo.png"
     if os.path.exists(logo_path):
         image = Image.open(logo_path)
-        image = image.resize((175, 175))
+        image = image.resize((145, 145))
         logo_img = ImageTk.PhotoImage(image)
         
         logo_label = tk.Label(
@@ -413,6 +436,13 @@ except Exception as e:
     print(f"Ошибка загрузки create.png: {e}")
 
 # ==========================================
+# ПОЛОСА НА РАССТОЯНИИ 150.5px ОТ ВЕРХА
+# ==========================================
+bar = tk.Frame(root, bg='#986722', height=0)
+bar.place(x=0, y=150.5, width=1280)
+bar.pack_propagate(False)
+
+# ==========================================
 # ОСНОВНОЙ КАНВАС С ТАБЛИЦЕЙ
 # ==========================================
 main_canvas = tk.Canvas(
@@ -425,13 +455,6 @@ main_canvas = tk.Canvas(
 main_canvas.place(x=20, y=167)
 
 main_canvas.bind("<Button-1>", on_button_click)
-
-# ==========================================
-# ПОЛОСА
-# ==========================================
-bar = tk.Frame(root, bg='#986722', height=0)
-bar.place(x=0, y=150.5, width=1280)
-bar.pack_propagate(False)
 
 # ==========================================
 # УПРАВЛЕНИЕ
