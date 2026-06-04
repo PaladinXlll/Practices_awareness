@@ -211,7 +211,7 @@ class LoginFrame(ctk.CTkFrame):
         self.on_login_success = on_login_success
 
         card_width = 510
-        card_height = 518
+        card_height = 600
 
         # ==========================================
         # КАРТОЧКА
@@ -296,7 +296,7 @@ class LoginFrame(ctk.CTkFrame):
             height=73,
             placeholder_text="Логин",
             font=("Advent Pro", 28),
-            corner_radius=30,
+            corner_radius=25,
             border_width=2,
             border_color="#555555",
             fg_color="#F2F2F2",
@@ -319,7 +319,7 @@ class LoginFrame(ctk.CTkFrame):
             height=73,
             placeholder_text="Пароль",
             font=("Advent Pro", 28),
-            corner_radius=30,
+            corner_radius=25,
             border_width=2,
             border_color="#555555",
             fg_color="#F2F2F2",
@@ -355,13 +355,13 @@ class LoginFrame(ctk.CTkFrame):
         # КНОПКА
         # ==========================================
 
-        btn_width = 470
-        btn_height = 80
+        btn_width = 410
+        btn_height = 74
 
         self.btn_image = create_gradient_image(
             btn_width,
             btn_height,
-            radius=30
+            radius=20
         )
 
         self.btn_canvas = tk.Canvas(
