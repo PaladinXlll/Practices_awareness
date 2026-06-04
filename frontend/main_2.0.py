@@ -113,7 +113,8 @@ class DashboardFrame(ctk.CTkFrame):
         self.cols = 8
 
         # Ширина столбцов
-        self.widths = [200, 250, 250, 150, 150, 200, 200, 100]
+        self.base_widths = [200, 250, 250, 150, 150, 200, 200, 100]
+        self.widths = self.base_widths.copy()
         
         # Заголовки
         self.columns = [
@@ -130,8 +131,11 @@ class DashboardFrame(ctk.CTkFrame):
         # Высота строки
         self.row_height = 50
 
-        # Хранение ID элементов для анимации наведения
-        self.button_rects = {}
+        # Хранилище для подсветки
+        self.highlighted_rect = None
+        self.highlighted_coords = None
+        # Подсветка иконок
+        self.hover_icon_bg = None
 
         # ==========================================
         # ВЕРХНЯЯ ПАНЕЛЬ С КНОПКАМИ
@@ -317,7 +321,7 @@ class DashboardFrame(ctk.CTkFrame):
             except:
                 pass
 
-        # Создаем фрейм для таблицы (нужен для scrollregion)
+        # Создаем фрейм для таблицы
         self.table_frame = tk.Frame(self.canvas, bg="#E6D7A8")
         self.canvas_window = self.canvas.create_window((0, 0), window=self.table_frame, anchor="nw")
         
@@ -404,11 +408,31 @@ class DashboardFrame(ctk.CTkFrame):
         self.canvas.configure(scrollregion=self.canvas.bbox("all"))
 
     def resize_canvas(self, event):
+        canvas_width = event.width
+        base_table_width = sum(self.base_widths)
+        
+        if canvas_width > base_table_width:
+            extra_width = canvas_width - base_table_width
+            self.widths = []
+            for w in self.base_widths:
+                if w > 0:
+                    new_w = w + int(extra_width * (w / base_table_width))
+                    self.widths.append(new_w)
+                else:
+                    self.widths.append(w)
+        else:
+            self.widths = self.base_widths.copy()
+        
+        self.draw_table()
+        
+        total_width = sum(self.widths)
+        total_height = (self.rows + 1) * self.row_height
         self.canvas.itemconfig(
             self.canvas_window,
-            width=event.width,
-            height=max(event.height, self.table_frame.winfo_reqheight())
+            width=total_width,
+            height=total_height
         )
+        self.canvas.configure(scrollregion=(0, 0, total_width, total_height))
 
     def mouse_wheel(self, event):
         self.canvas.yview_scroll(
@@ -461,7 +485,6 @@ class DashboardFrame(ctk.CTkFrame):
 
     def draw_table(self):
         self.canvas.delete("all")
-        self.button_rects.clear()
         
         total_width = sum(self.widths)
         total_height = (self.rows + 1) * self.row_height
@@ -472,11 +495,10 @@ class DashboardFrame(ctk.CTkFrame):
         self.canvas.create_rectangle(0, 0, total_width, total_height, fill="#E6D7A8", outline="")
         
         # ==========================================
-        # ЗАГОЛОВКИ (теперь цвет как у ячеек #E9DCB0)
+        # ЗАГОЛОВКИ
         # ==========================================
         x = 0
         for i, (col, width) in enumerate(zip(self.columns, self.widths)):
-            # Фон заголовка теперь #E9DCB0 (как у ячеек)
             self.canvas.create_rectangle(
                 x, 0, x + width, self.row_height,
                 fill="#E9DCB0", outline="black", width=1
@@ -484,14 +506,26 @@ class DashboardFrame(ctk.CTkFrame):
             
             if i == 0:
                 if self.filter_img:
-                    self.canvas.create_image(
+                    # Создаем значок фильтра
+                    filter_id = self.canvas.create_image(
                         x + 25, self.row_height // 2,
                         image=self.filter_img, anchor="center",
                         tags=("filter_icon",)
                     )
-                    self.canvas.create_text(
-                        x + width // 2 + 15, self.row_height // 2,
-                        text=col, font=("Advent Pro", 16, "bold"), fill="#2B2B2B"
+                    self.canvas.tag_bind(
+                        filter_id,
+                        "<Enter>",
+                        lambda e,
+                        cx=x + 25,
+                        cy=self.row_height // 2:
+                        self.icon_hover_enter(cx, cy)
+                    )
+
+                    self.canvas.tag_bind(
+                        filter_id,
+                        "<Leave>",
+                        lambda e:
+                        self.icon_hover_leave()
                     )
                 else:
                     self.canvas.create_text(
@@ -520,22 +554,57 @@ class DashboardFrame(ctk.CTkFrame):
                 
                 if col_idx == 0:
                     if self.info_img:
-                        self.canvas.create_image(
+                        # Создаем значок информации
+                        info_id = self.canvas.create_image(
                             x + 25, y + self.row_height // 2,
                             image=self.info_img, anchor="center",
                             tags=(f"info_{row}",)
                         )
+                        self.canvas.tag_bind(
+                            info_id,
+                            "<Enter>",
+                            lambda e,
+                            cx=x + 25,
+                            cy=y + self.row_height // 2:
+                            self.icon_hover_enter(cx, cy)
+                        )
+
+                        self.canvas.tag_bind(
+                            info_id,
+                            "<Leave>",
+                            lambda e:
+                            self.icon_hover_leave()
+                        )
+                        self.canvas.tag_bind(info_id, "<Button-1>", lambda e, r=row: self.on_info_click_by_row(r))
+                        
                         data = self.table_data.get(row, {}).get(col, "")
                         self.canvas.create_text(
                             x + width // 2 + 20, y + self.row_height // 2,
                             text=data, font=("Advent Pro", 16), fill="black"
                         )
                     else:
-                        self.canvas.create_text(
+                        info_id = self.canvas.create_text(
                             x + 25, y + self.row_height // 2,
                             text="ⓘ", font=("Advent Pro", 20, "bold"), fill="black",
                             tags=(f"info_{row}",)
                         )
+                        self.canvas.tag_bind(
+                            info_id,
+                            "<Enter>",
+                            lambda e,
+                            cx=x + 25,
+                            cy=y + self.row_height // 2:
+                            self.icon_hover_enter(cx, cy)
+                        )
+
+                        self.canvas.tag_bind(
+                            info_id,
+                            "<Leave>",
+                            lambda e:
+                            self.icon_hover_leave()
+                        )
+                        self.canvas.tag_bind(info_id, "<Button-1>", lambda e, r=row: self.on_info_click_by_row(r))
+                        
                         data = self.table_data.get(row, {}).get(col, "")
                         self.canvas.create_text(
                             x + width // 2 + 20, y + self.row_height // 2,
@@ -563,120 +632,179 @@ class DashboardFrame(ctk.CTkFrame):
             center_y = y + self.row_height // 2
             center_x = button_col_x + button_col_width // 2
             
-            edit_rect = self.canvas.create_rectangle(
-                center_x - 32, center_y - 18, center_x - 8, center_y + 18,
-                outline="", fill="", width=2
-            )
-            
+            # Кнопка редактирования
             if self.edit_img:
-                edit_btn = self.canvas.create_image(
+                edit_id = self.canvas.create_image(
                     center_x - 20, center_y,
                     image=self.edit_img, anchor="center",
                     tags=(f"edit_{row}",)
                 )
+                self.canvas.tag_bind(
+                    edit_id,
+                    "<Enter>",
+                    lambda e,
+                    cx=center_x - 20,
+                    cy=center_y:
+                    self.icon_hover_enter(cx, cy)
+                )
+
+                self.canvas.tag_bind(
+                    edit_id,
+                    "<Leave>",
+                    lambda e:
+                    self.icon_hover_leave()
+                )
+                self.canvas.tag_bind(edit_id, "<Button-1>", lambda e, r=row: self.on_edit_click_by_row(r))
             else:
-                edit_btn = self.canvas.create_text(
+                edit_id = self.canvas.create_text(
                     center_x - 20, center_y,
                     text="✎", font=("Advent Pro", 18), fill="black",
                     tags=(f"edit_{row}",)
                 )
+                self.canvas.tag_bind(
+                    edit_id,
+                    "<Enter>",
+                    lambda e,
+                    cx=center_x - 20,
+                    cy=center_y:
+                    self.icon_hover_enter(cx, cy)
+                )
+
+                self.canvas.tag_bind(
+                    edit_id,
+                    "<Leave>",
+                    lambda e:
+                    self.icon_hover_leave()
+                )
+                self.canvas.tag_bind(edit_id, "<Button-1>", lambda e, r=row: self.on_edit_click_by_row(r))
             
-            delete_rect = self.canvas.create_rectangle(
-                center_x + 8, center_y - 18, center_x + 32, center_y + 18,
-                outline="", fill="", width=2
-            )
-            
+            # Кнопка удаления
             if self.delete_img:
-                delete_btn = self.canvas.create_image(
+                delete_id = self.canvas.create_image(
                     center_x + 20, center_y,
                     image=self.delete_img, anchor="center",
                     tags=(f"delete_{row}",)
                 )
+                self.canvas.tag_bind(
+                    delete_id,
+                    "<Enter>",
+                    lambda e,
+                    cx=center_x + 20,
+                    cy=center_y:
+                    self.icon_hover_enter(cx, cy)
+                )
+
+                self.canvas.tag_bind(
+                    delete_id,
+                    "<Leave>",
+                    lambda e:
+                    self.icon_hover_leave()
+                )
+                self.canvas.tag_bind(delete_id, "<Button-1>", lambda e, r=row: self.on_delete_click_by_row(r))
             else:
-                delete_btn = self.canvas.create_text(
+                delete_id = self.canvas.create_text(
                     center_x + 20, center_y,
                     text="🗑", font=("Advent Pro", 18), fill="black",
                     tags=(f"delete_{row}",)
                 )
-            
-            self.button_rects[edit_btn] = edit_rect
-            self.button_rects[delete_btn] = delete_rect
-        
-        # Привязываем события для обводки
-        for btn_id, rect_id in self.button_rects.items():
-            self.canvas.tag_bind(btn_id, "<Enter>", lambda e, r=rect_id: self.on_hover_enter(r))
-            self.canvas.tag_bind(btn_id, "<Leave>", lambda e, r=rect_id: self.on_hover_leave(r))
-        
-        self.canvas.tag_bind("edit", "<Button-1>", self.on_edit_click)
-        self.canvas.tag_bind("delete", "<Button-1>", self.on_delete_click)
-        self.canvas.tag_bind("filter_icon", "<Button-1>", self.on_filter_click)
-        self.canvas.tag_bind("info", "<Button-1>", self.on_info_click)
-        
-        # Обводка для значка информации
-        info_items = self.canvas.find_withtag("info")
-        for info_id in info_items:
-            bbox = self.canvas.bbox(info_id)
-            if bbox:
-                x1, y1, x2, y2 = bbox
-                rect = self.canvas.create_rectangle(
-                    x1 - 5, y1 - 5, x2 + 5, y2 + 5,
-                    outline="", fill="", width=2
+                self.canvas.tag_bind(
+                    delete_id,
+                    "<Enter>",
+                    lambda e,
+                    cx=center_x + 20,
+                    cy=center_y:
+                    self.icon_hover_enter(cx, cy)
                 )
-                self.canvas.tag_bind(info_id, "<Enter>", lambda e, r=rect: self.on_hover_enter(r))
-                self.canvas.tag_bind(info_id, "<Leave>", lambda e, r=rect: self.on_hover_leave(r))
-        
-        # Обводка для значка фильтра
-        filter_items = self.canvas.find_withtag("filter_icon")
-        for filter_id in filter_items:
-            bbox = self.canvas.bbox(filter_id)
-            if bbox:
-                x1, y1, x2, y2 = bbox
-                rect = self.canvas.create_rectangle(
-                    x1 - 5, y1 - 5, x2 + 5, y2 + 5,
-                    outline="", fill="", width=2
+
+                self.canvas.tag_bind(
+                    delete_id,
+                    "<Leave>",
+                    lambda e:
+                    self.icon_hover_leave()
                 )
-                self.canvas.tag_bind(filter_id, "<Enter>", lambda e, r=rect: self.on_hover_enter(r))
-                self.canvas.tag_bind(filter_id, "<Leave>", lambda e, r=rect: self.on_hover_leave(r))
+                self.canvas.tag_bind(delete_id, "<Button-1>", lambda e, r=row: self.on_delete_click_by_row(r))
+        
+        # Перерисовываем рамки ячеек поверх всего
+        self.redraw_borders()
 
-    def on_hover_enter(self, rect_id):
-        self.canvas.itemconfig(rect_id, outline="#986722", fill="")
+    def redraw_borders(self):
+        """Перерисовывает черные рамки поверх подсветки"""
+        total_width = sum(self.widths)
+        total_height = (self.rows + 1) * self.row_height
+        
+        # Рисуем горизонтальные линии
+        for row in range(self.rows + 2):
+            y = row * self.row_height
+            self.canvas.create_line(0, y, total_width, y, fill="black", width=1, tags="border_line")
+        
+        # Рисуем вертикальные линии
+        x = 0
+        for width in self.widths:
+            x += width
+            self.canvas.create_line(x, 0, x, total_height, fill="black", width=1, tags="border_line")
 
-    def on_hover_leave(self, rect_id):
-        self.canvas.itemconfig(rect_id, outline="", fill="")
+    def highlight_cell(self, x, y, width, height):
+        """Подсветить ячейку серым цветом"""
+        # Удаляем предыдущую подсветку
+        if self.highlighted_rect:
+            self.canvas.delete(self.highlighted_rect)
+        
+        # Создаем новую подсветку
+        self.highlighted_rect = self.canvas.create_rectangle(
+            x, y, x + width, y + height,
+            fill="#C8B57E", outline=""
+        )
+        # Отправляем подсветку на задний план
+        self.canvas.tag_lower(self.highlighted_rect)
+        self.highlighted_coords = (x, y, width, height)
+    
+    def unhighlight_cell(self):
+        """Убрать подсветку ячейки"""
+        if self.highlighted_rect:
+            self.canvas.delete(self.highlighted_rect)
+            self.highlighted_rect = None
+            self.highlighted_coords = None
+    def icon_hover_enter(self, x, y):
+            """Подсветка только области значка"""
+
+            if self.hover_icon_bg:
+                self.canvas.delete(self.hover_icon_bg)
+
+            self.hover_icon_bg = self.canvas.create_rectangle(
+                x - 20,
+                y - 20,
+                x + 20,
+                y + 20,
+                fill="#C8B57E",
+                outline="#C8B57E",
+                width=1
+            )
+
+            self.canvas.tag_lower(self.hover_icon_bg)
+
+
+    def icon_hover_leave(self):
+            """Убрать подсветку значка"""
+
+            if self.hover_icon_bg:
+                self.canvas.delete(self.hover_icon_bg)
+                self.hover_icon_bg = None
 
     # ==========================================
     # ОБРАБОТЧИКИ КЛИКОВ
     # ==========================================
 
-    def on_edit_click(self, event):
-        item = self.canvas.find_closest(event.x, event.y)[0]
-        tags = self.canvas.gettags(item)
-        for tag in tags:
-            if tag.startswith("edit_"):
-                row = int(tag.split("_")[1])
-                self.edit_row(row)
-                break
+    def on_edit_click_by_row(self, row):
+        self.edit_row(row)
 
-    def on_delete_click(self, event):
-        item = self.canvas.find_closest(event.x, event.y)[0]
-        tags = self.canvas.gettags(item)
-        for tag in tags:
-            if tag.startswith("delete_"):
-                row = int(tag.split("_")[1])
-                self.delete_row(row)
-                break
+    def on_delete_click_by_row(self, row):
+        self.delete_row(row)
+
+    def on_info_click_by_row(self, row):
+        self.show_info(row)
 
     def on_filter_click(self, event):
         messagebox.showinfo("Фильтр", "Функция фильтрации будет добавлена позже")
-
-    def on_info_click(self, event):
-        item = self.canvas.find_closest(event.x, event.y)[0]
-        tags = self.canvas.gettags(item)
-        for tag in tags:
-            if tag.startswith("info_"):
-                row = int(tag.split("_")[1])
-                self.show_info(row)
-                break
 
     # ==========================================
     # ПОКАЗ ИНФОРМАЦИИ
