@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 from database import get_connection
 from pymysql import Error
 
@@ -11,12 +12,46 @@ ALLOWED_TABLES = {
     "control",
     "teachers_events"
 }
+=======
+from backend.database import get_connection
+from pymysql import Error
+
+print("ЗАГРУЖЕН НОВЫЙ db_functions.py")
+
+def add_data(table, values):
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    placeholders = ", ".join(["%s"] * len(values))
+    query = f"INSERT INTO {table} VALUES (NULL, {placeholders})"
+
+    cursor.execute(query, values)
+
+    conn.commit()
+    conn.close()
+
+
+def delete_data(table, record_id):
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    query = f"DELETE FROM {table} WHERE id = %s"
+    cursor.execute(query, (record_id,))
+
+    conn.commit()
+    conn.close()
+>>>>>>> fe7927ad128842b6d761d5ba13dd53c77f5d96ac
 
 
 ALLOWED_COLUMNS = {
     "users": {"id", "login", "password", "role"},
 
+<<<<<<< HEAD
     "teachers": {"teacher_id", "name", "surname", "patronymic"},
+=======
+    query = f"UPDATE {table} SET {column} = %s WHERE id = %s"
+    cursor.execute(query, (new_value, record_id))
+>>>>>>> fe7927ad128842b6d761d5ba13dd53c77f5d96ac
 
     "events": {
         "event_id",
@@ -37,6 +72,7 @@ ALLOWED_COLUMNS = {
 }
 
 
+<<<<<<< HEAD
 PRIMARY_KEYS = {
     "users": "id",
     "teachers": "teacher_id",
@@ -45,6 +81,31 @@ PRIMARY_KEYS = {
     "type": "type_id",
     "control": "control_id"
 }
+=======
+def get_data(table, record_id=None, columns=["*"]):
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    columns_str = ", ".join(columns)
+
+    if record_id is not None:
+        query = f"SELECT {columns_str} FROM {table} WHERE id = %s"
+        cursor.execute(query, (record_id,))
+        result = cursor.fetchone()
+    else:
+        query = f"SELECT {columns_str} FROM {table}"
+        cursor.execute(query)
+        result = cursor.fetchall()
+
+    conn.close()
+    return result
+
+
+def authorize_user(login_input, password_input):
+    connection = get_connection()
+    if not connection:
+        return None
+>>>>>>> fe7927ad128842b6d761d5ba13dd53c77f5d96ac
 
 
 def check_sql_safety(table, columns=None):
@@ -85,12 +146,38 @@ def execute_query(query, params=None, fetchone=False, fetchall=False, commit=Fal
 
     conn = None
     cursor = None
+<<<<<<< HEAD
 
     try:
         conn = get_connection()
 
         if conn is None:
             return None
+=======
+
+    try:
+        cursor = connection.cursor()
+
+        query = """
+        SELECT id, login, role
+        FROM users
+        WHERE login = %s AND password = %s
+        """
+
+        cursor.execute(query, (login_input, password_input))
+        user = cursor.fetchall()
+
+        if user:
+            print("\nУспешная авторизация!")
+            print(
+                f"Добро пожаловать! ID: {user[0]['id']}, "
+                f"Роль: {user[0]['role']}"
+            )
+            return user
+
+        print("\nОшибка: Неверный логин или пароль.")
+        return None
+>>>>>>> fe7927ad128842b6d761d5ba13dd53c77f5d96ac
 
         cursor = conn.cursor()
 
@@ -114,12 +201,17 @@ def execute_query(query, params=None, fetchone=False, fetchall=False, commit=Fal
         return result
 
     except Error as e:
+<<<<<<< HEAD
         print(f"Ошибка SQL: {e}")
+=======
+        print(f"\nОшибка при выполнении SQL-запроса: {e}")
+>>>>>>> fe7927ad128842b6d761d5ba13dd53c77f5d96ac
         return None
 
     finally:
         if cursor:
             cursor.close()
+<<<<<<< HEAD
         if conn:
             conn.close()
 
@@ -206,3 +298,7 @@ def authorize_user(login_input, password_input):
 
     print("\nОшибка: Неверный логин или пароль.")
     return None
+=======
+        if connection:
+            connection.close()   
+>>>>>>> fe7927ad128842b6d761d5ba13dd53c77f5d96ac
