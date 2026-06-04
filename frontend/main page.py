@@ -182,6 +182,7 @@ class DashboardFrame(ctk.CTkFrame):
 
         title_label.pack(side="left", padx=10)
 
+
         # ==========================================
         # КНОПКА СОЗДАНИЯ
         # ==========================================
@@ -222,6 +223,26 @@ class DashboardFrame(ctk.CTkFrame):
             )
 
         add_btn.pack(side="right", padx=15)
+        
+        # ==========================================
+        # КЛИКАБЕЛЬНЫЙ ТЕКСТ "Редактирование списка преподавателей" 
+        # С ТАКИМ ЖЕ ЭФФЕКТОМ, КАК У КНОПОК (с hover_color)
+        # ==========================================
+        
+        self.edit_text = ctk.CTkButton(
+            top_bar,
+            text="Редактирование списка преподавателей",
+            font=("Advent Pro", 20, "bold"),
+            fg_color="transparent",
+            text_color="black",
+            hover_color="#C8B57E",  # Такой же цвет, как у кнопок выхода и создания
+            corner_radius=10,
+            width=320,
+            height=40,
+            command=self.edit_teachers_list
+        )
+        
+        self.edit_text.pack(side="right", padx=15, pady=10)
 
         # ==========================================
         # ОБЛАСТЬ ТАБЛИЦЫ
@@ -402,17 +423,89 @@ class DashboardFrame(ctk.CTkFrame):
             self.create_row()
 
     # ==========================================
+    # МЕТОД ДЛЯ РЕДАКТИРОВАНИЯ СПИСКА ПРЕПОДАВАТЕЛЕЙ
+    # ==========================================
+    
+    def edit_teachers_list(self):
+        """Открывает окно для редактирования списка преподавателей"""
+        
+        edit_window = ctk.CTkToplevel(self)
+        edit_window.title("Редактирование преподавателей")
+        edit_window.geometry("500x400")
+        edit_window.configure(fg_color="#DCCB98")
+        edit_window.resizable(False, False)
+        
+        # Заголовок
+        header = ctk.CTkFrame(
+            edit_window,
+            height=50,
+            fg_color="#986722",
+            corner_radius=0
+        )
+        header.pack(fill="x")
+        header.pack_propagate(False)
+        
+        header_label = ctk.CTkLabel(
+            header,
+            text="Редактирование списка преподавателей",
+            font=("Advent Pro", 20, "bold"),
+            text_color="white"
+        )
+        header_label.pack(expand=True)
+        
+        # Область для списка
+        list_frame = ctk.CTkFrame(
+            edit_window,
+            fg_color="#E6D7A8",
+            corner_radius=15
+        )
+        list_frame.pack(fill="both", expand=True, padx=20, pady=20)
+        
+        # Пример списка преподавателей
+        teachers = ["Иванов И.И.", "Петров П.П.", "Сидоров С.С."]
+        
+        for i, teacher in enumerate(teachers):
+            teacher_frame = ctk.CTkFrame(
+                list_frame,
+                fg_color="#E9DCB0",
+                corner_radius=10,
+                height=45
+            )
+            teacher_frame.pack(fill="x", padx=10, pady=5)
+            teacher_frame.pack_propagate(False)
+            
+            teacher_label = ctk.CTkLabel(
+                teacher_frame,
+                text=teacher,
+                font=("Advent Pro", 16),
+                text_color="black"
+            )
+            teacher_label.pack(side="left", padx=15)
+        
+        # Кнопка закрытия
+        close_btn = ctk.CTkButton(
+            edit_window,
+            text="Закрыть",
+            width=120,
+            height=35,
+            fg_color="#986722",
+            hover_color="#7A5C3B",
+            text_color="white",
+            corner_radius=10,
+            command=edit_window.destroy
+        )
+        close_btn.pack(pady=15)
+
+    # ==========================================
     # SCROLL
     # ==========================================
 
     def update_scrollregion(self, event=None):
-
         self.canvas.configure(
             scrollregion=self.canvas.bbox("all")
         )
 
     def resize_canvas(self, event):
-
         self.canvas.itemconfig(
             self.canvas_window,
             height=max(
@@ -422,7 +515,6 @@ class DashboardFrame(ctk.CTkFrame):
         )
 
     def mouse_wheel(self, event):
-
         self.canvas.yview_scroll(
             int(-1 * (event.delta / 120)),
             "units"
@@ -433,14 +525,12 @@ class DashboardFrame(ctk.CTkFrame):
     # ==========================================
 
     def create_row(self):
-
         row = self.current_row
         columns_count = 8
 
         self.row_entries[row] = []
 
         for col in range(columns_count):
-
             cell_frame = ctk.CTkFrame(
                 self.table_frame,
                 fg_color="#E9DCB0",
@@ -457,54 +547,19 @@ class DashboardFrame(ctk.CTkFrame):
                 sticky="nsew"
             )
 
-            # ==========================================
-            # ПЕРВАЯ КОЛОНКА
-            # ==========================================
-
             if col == 0:
-
-                info_path = "assets/info.png"
-
-                if os.path.exists(info_path):
-
-                    info_image = Image.open(info_path)
-
-                    self.info_icon = ctk.CTkImage(
-                        light_image=info_image,
-                        dark_image=info_image,
-                        size=(26, 26)
-                    )
-
-                    info_button = ctk.CTkButton(
-                        cell_frame,
-                        image=self.info_icon,
-                        text="",
-                        width=28,
-                        height=28,
-                        fg_color="transparent",
-                        hover_color="#D5C28E",
-                        command=lambda r=row: self.show_info(r)
-                    )
-
-                else:
-
-                    info_button = ctk.CTkButton(
-                        cell_frame,
-                        text="ⓘ",
-                        width=28,
-                        height=28,
-                        fg_color="transparent",
-                        hover_color="#D5C28E",
-                        text_color="black",
-                        font=("Advent Pro", 18),
-                        command=lambda r=row: self.show_info(r)
-                    )
-
-                info_button.pack(
-                    side="left",
-                    padx=(5, 2),
-                    pady=5
+                info_button = ctk.CTkButton(
+                    cell_frame,
+                    text="ⓘ",
+                    width=28,
+                    height=28,
+                    fg_color="transparent",
+                    hover_color="#D5C28E",
+                    text_color="black",
+                    font=("Advent Pro", 18),
+                    command=lambda r=row: self.show_info(r)
                 )
+                info_button.pack(side="left", padx=(5, 2), pady=5)
 
                 entry = ctk.CTkEntry(
                     cell_frame,
@@ -513,119 +568,36 @@ class DashboardFrame(ctk.CTkFrame):
                     text_color="black",
                     font=("Advent Pro", 18)
                 )
-
-                entry.pack(
-                    side="left",
-                    fill="both",
-                    expand=True,
-                    padx=(0, 5),
-                    pady=5
-                )
-
+                entry.pack(side="left", fill="both", expand=True, padx=(0, 5), pady=5)
                 self.row_entries[row].append(entry)
 
-            # ==========================================
-            # ПОСЛЕДНЯЯ КОЛОНКА
-            # ==========================================
-
             elif col == columns_count - 1:
-
-                # ==========================================
-                # РЕДАКТИРОВАНИЕ
-                # ==========================================
-
-                edit_path = "frontend/assets/edit.png"
-
-                if os.path.exists(edit_path):
-
-                    edit_image = Image.open(edit_path)
-
-                    self.edit_icon = ctk.CTkImage(
-                        light_image=edit_image,
-                        dark_image=edit_image,
-                        size=(28, 28)
-                    )
-
-                    edit_btn = ctk.CTkButton(
-                        cell_frame,
-                        image=self.edit_icon,
-                        text="",
-                        width=34,
-                        height=34,
-                        fg_color="transparent",
-                        hover_color="#D5C28E",
-                        command=lambda r=row: self.edit_row(r)
-                    )
-
-                else:
-
-                    edit_btn = ctk.CTkButton(
-                        cell_frame,
-                        text="✎",
-                        width=34,
-                        height=34,
-                        fg_color="transparent",
-                        hover_color="#D5C28E",
-                        text_color="black",
-                        font=("Advent Pro", 18),
-                        command=lambda r=row: self.edit_row(r)
-                    )
-
-                edit_btn.pack(
-                    side="left",
-                    padx=(5, 2),
-                    pady=5
+                edit_btn = ctk.CTkButton(
+                    cell_frame,
+                    text="✎",
+                    width=34,
+                    height=34,
+                    fg_color="transparent",
+                    hover_color="#D5C28E",
+                    text_color="black",
+                    font=("Advent Pro", 18),
+                    command=lambda r=row: self.edit_row(r)
                 )
+                edit_btn.pack(side="left", padx=(5, 2), pady=5)
 
-                # ==========================================
-                # УДАЛЕНИЕ
-                # ==========================================
-
-                delete_path = "frontend/assets/delete.png"
-
-                if os.path.exists(delete_path):
-
-                    delete_image = Image.open(delete_path)
-
-                    self.delete_icon = ctk.CTkImage(
-                        light_image=delete_image,
-                        dark_image=delete_image,
-                        size=(28, 28)
-                    )
-
-                    delete_btn = ctk.CTkButton(
-                        cell_frame,
-                        image=self.delete_icon,
-                        text="",
-                        width=34,
-                        height=34,
-                        fg_color="transparent",
-                        hover_color="#D5C28E",
-                        command=lambda r=row: self.delete_row(r)
-                    )
-
-                else:
-
-                    delete_btn = ctk.CTkButton(
-                        cell_frame,
-                        text="🗑",
-                        width=34,
-                        height=34,
-                        fg_color="transparent",
-                        hover_color="#D5C28E",
-                        text_color="black",
-                        font=("Advent Pro", 18),
-                        command=lambda r=row: self.delete_row(r)
-                    )
-
-                delete_btn.pack(
-                    side="left",
-                    padx=2,
-                    pady=5
+                delete_btn = ctk.CTkButton(
+                    cell_frame,
+                    text="🗑",
+                    width=34,
+                    height=34,
+                    fg_color="transparent",
+                    hover_color="#D5C28E",
+                    text_color="black",
+                    font=("Advent Pro", 18),
+                    command=lambda r=row: self.delete_row(r)
                 )
-
+                delete_btn.pack(side="left", padx=2, pady=5)
             else:
-
                 entry = ctk.CTkEntry(
                     cell_frame,
                     fg_color="#E9DCB0",
@@ -633,14 +605,7 @@ class DashboardFrame(ctk.CTkFrame):
                     text_color="black",
                     font=("Advent Pro", 18)
                 )
-
-                entry.pack(
-                    fill="both",
-                    expand=True,
-                    padx=5,
-                    pady=5
-                )
-
+                entry.pack(fill="both", expand=True, padx=5, pady=5)
                 self.row_entries[row].append(entry)
 
         self.current_row += 1
@@ -650,198 +615,73 @@ class DashboardFrame(ctk.CTkFrame):
     # ==========================================
 
     def custom_dialog(self, title, text, confirm_text, command):
-
         dialog = ctk.CTkToplevel(self)
-
         dialog.geometry("250x185")
         dialog.resizable(False, False)
         dialog.title(title)
-
         dialog.grab_set()
 
-        header = ctk.CTkFrame(
-            dialog,
-            height=40,
-            fg_color="#C9A646",
-            corner_radius=0
-        )
-
+        header = ctk.CTkFrame(dialog, height=40, fg_color="#C9A646", corner_radius=0)
         header.pack(fill="x")
-
-        header_label = ctk.CTkLabel(
-            header,
-            text=title,
-            font=("Advent Pro", 16),
-            text_color="black"
-        )
-
+        header_label = ctk.CTkLabel(header, text=title, font=("Advent Pro", 16), text_color="black")
         header_label.pack(expand=True)
 
-        text_label = ctk.CTkLabel(
-            dialog,
-            text=text,
-            font=("Advent Pro", 14),
-            text_color="#444444",
-            wraplength=200
-        )
-
+        text_label = ctk.CTkLabel(dialog, text=text, font=("Advent Pro", 14), text_color="#444444", wraplength=200)
         text_label.pack(expand=True)
 
-        buttons = ctk.CTkFrame(
-            dialog,
-            fg_color="transparent"
-        )
-
+        buttons = ctk.CTkFrame(dialog, fg_color="transparent")
         buttons.pack(fill="x")
 
         confirm_btn = ctk.CTkButton(
-            buttons,
-            text=confirm_text,
-            width=125,
-            height=45,
-            corner_radius=0,
-            fg_color="#D8CCA3",
-            hover_color="#C8B57E",
-            text_color="#555555",
+            buttons, text=confirm_text, width=125, height=45, corner_radius=0,
+            fg_color="#D8CCA3", hover_color="#C8B57E", text_color="#555555",
             command=lambda: [command(), dialog.destroy()]
         )
-
         confirm_btn.pack(side="left")
 
         cancel_btn = ctk.CTkButton(
-            buttons,
-            text="Отмена",
-            width=125,
-            height=45,
-            corner_radius=0,
-            fg_color="#D8CCA3",
-            hover_color="#C8B57E",
-            text_color="#777777",
+            buttons, text="Отмена", width=125, height=45, corner_radius=0,
+            fg_color="#D8CCA3", hover_color="#C8B57E", text_color="#777777",
             command=dialog.destroy
         )
-
         cancel_btn.pack(side="right")
 
-    # ==========================================
-    # СОЗДАТЬ
-    # ==========================================
-
     def show_create_dialog(self):
-
-        self.custom_dialog(
-            "Создать",
-            "Сохранить изменения",
-            "Сохранить",
-            self.create_row
-        )
-
-    # ==========================================
-    # РЕДАКТИРОВАТЬ
-    # ==========================================
+        self.custom_dialog("Создать", "Сохранить изменения", "Сохранить", self.create_row)
 
     def edit_row(self, row):
-
-        self.custom_dialog(
-            "Редактировать",
-            "Начать редактирование",
-            "Начать",
-            lambda: None
-        )
-
-    # ==========================================
-    # УДАЛИТЬ
-    # ==========================================
+        self.custom_dialog("Редактировать", "Начать редактирование", "Начать", lambda: None)
 
     def delete_row(self, row):
-
         def remove():
-
             widgets = self.table_frame.grid_slaves(row=row)
-
             for widget in widgets:
                 widget.destroy()
-
             if row in self.row_entries:
                 del self.row_entries[row]
-
-        self.custom_dialog(
-            "Удалить",
-            "Удалить информацию",
-            "Удалить",
-            remove
-        )
-
-    # ==========================================
-    # ВЫХОД
-    # ==========================================
+        self.custom_dialog("Удалить", "Удалить информацию", "Удалить", remove)
 
     def show_exit_dialog(self):
-
-        self.custom_dialog(
-            "Выход",
-            "Вы точно хотите\nвыйти?",
-            "Выход",
-            self.master.destroy
-        )
-
-    # ==========================================
-    # ИНФОРМАЦИЯ
-    # ==========================================
+        self.custom_dialog("Выход", "Вы точно хотите\nвыйти?", "Выход", self.master.destroy)
 
     def show_info(self, row):
-
         info_window = ctk.CTkToplevel(self)
-
         info_window.geometry("467x610")
         info_window.title("Информация")
         info_window.configure(fg_color="#D4B45F")
-
         info_window.resizable(False, False)
 
-        header = ctk.CTkFrame(
-            info_window,
-            width=467,
-            height=108,
-            fg_color="#C9A646",
-            corner_radius=0
-        )
-
+        header = ctk.CTkFrame(info_window, width=467, height=108, fg_color="#C9A646", corner_radius=0)
         header.pack(fill="x")
         header.pack_propagate(False)
 
-        icon_label = ctk.CTkLabel(
-            header,
-            text="ⓘ",
-            font=("Advent Pro", 30),
-            text_color="black"
-        )
-
+        icon_label = ctk.CTkLabel(header, text="ⓘ", font=("Advent Pro", 30), text_color="black")
         icon_label.place(x=18, y=18)
 
-        title_entry = ctk.CTkEntry(
-            header,
-            width=280,
-            height=50,
-            fg_color="#C9A646",
-            border_width=0,
-            text_color="black",
-            font=("Advent Pro", 22)
-        )
-
+        title_entry = ctk.CTkEntry(header, width=280, height=50, fg_color="#C9A646", border_width=0, text_color="black", font=("Advent Pro", 22))
         title_entry.place(x=70, y=20)
 
-        close_btn = ctk.CTkButton(
-            header,
-            text="✕",
-            width=25,
-            height=25,
-            fg_color="transparent",
-            hover_color="#B89435",
-            text_color="black",
-            font=("Advent Pro", 24),
-            command=info_window.destroy
-        )
-
+        close_btn = ctk.CTkButton(header, text="✕", width=25, height=25, fg_color="transparent", hover_color="#B89435", text_color="black", font=("Advent Pro", 24), command=info_window.destroy)
         close_btn.place(x=420, y=10)
 
 
@@ -850,6 +690,5 @@ class DashboardFrame(ctk.CTkFrame):
 # ==========================================
 
 if __name__ == "__main__":
-
     app = App()
     app.mainloop()

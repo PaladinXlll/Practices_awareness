@@ -375,7 +375,7 @@ class LoginFrame(ctk.CTkFrame):
 
         self.btn_canvas.place(
             relx=0.5,
-            y=500,
+            y=535,
             anchor="center"
         )
 
