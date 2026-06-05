@@ -131,11 +131,9 @@ class DashboardFrame(ctk.CTkFrame):
         # Высота строки
         self.row_height = 50
 
-        # Хранилище для подсветки
-        self.highlighted_rect = None
-        self.highlighted_coords = None
-        # Подсветка иконок
+        # Хранилище для подсветки иконок
         self.hover_icon_bg = None
+        self.icon_positions = {}  # {icon_id: (x, y)}
 
         # ==========================================
         # ВЕРХНЯЯ ПАНЕЛЬ С КНОПКАМИ
@@ -277,7 +275,6 @@ class DashboardFrame(ctk.CTkFrame):
         self.edit_img = None
         self.delete_img = None
         
-        # Загрузка иконки фильтра
         filter_paths = ["frontend/assets/filter.png", "assets/filter.png", "filter.png"]
         for path in filter_paths:
             try:
@@ -288,7 +285,6 @@ class DashboardFrame(ctk.CTkFrame):
             except:
                 pass
         
-        # Загрузка иконки информации
         info_paths = ["frontend/assets/info.png", "assets/info.png", "info.png"]
         for path in info_paths:
             try:
@@ -299,7 +295,6 @@ class DashboardFrame(ctk.CTkFrame):
             except:
                 pass
         
-        # Загрузка иконки редактирования
         edit_paths = ["frontend/assets/edit.png", "assets/edit.png", "edit.png"]
         for path in edit_paths:
             try:
@@ -310,7 +305,6 @@ class DashboardFrame(ctk.CTkFrame):
             except:
                 pass
         
-        # Загрузка иконки удаления
         delete_paths = ["frontend/assets/delete.png", "assets/delete.png", "delete.png"]
         for path in delete_paths:
             try:
@@ -480,11 +474,38 @@ class DashboardFrame(ctk.CTkFrame):
         self.custom_dialog("Выход", "Вы точно хотите\nвыйти?", "Выход", self.master.destroy)
 
     # ==========================================
+    # ПОДСВЕТКА ИКОНОК
+    # ==========================================
+
+    def icon_hover_enter(self, event, icon_id, x, y):
+        """Подсветка иконки при наведении - рисуем ПОВЕРХ всего"""
+        # Удаляем предыдущую подсветку
+        if self.hover_icon_bg:
+            self.canvas.delete(self.hover_icon_bg)
+        
+        # Создаем новую подсветку
+        self.hover_icon_bg = self.canvas.create_rectangle(
+            x - 18, y - 18, x + 18, y + 18,
+            fill="#C8B57E", outline="#C8B57E", width=2
+        )
+        # Поднимаем подсветку на самый верх
+        self.canvas.tag_raise(self.hover_icon_bg)
+        # Поднимаем иконку над подсветкой
+        self.canvas.tag_raise(icon_id)
+
+    def icon_hover_leave(self, event):
+        """Убрать подсветку иконки"""
+        if self.hover_icon_bg:
+            self.canvas.delete(self.hover_icon_bg)
+            self.hover_icon_bg = None
+
+    # ==========================================
     # РИСОВАНИЕ ТАБЛИЦЫ
     # ==========================================
 
     def draw_table(self):
         self.canvas.delete("all")
+        self.icon_positions.clear()
         
         total_width = sum(self.widths)
         total_height = (self.rows + 1) * self.row_height
@@ -506,26 +527,21 @@ class DashboardFrame(ctk.CTkFrame):
             
             if i == 0:
                 if self.filter_img:
-                    # Создаем значок фильтра
+                    icon_x = x + 25
+                    icon_y = self.row_height // 2
                     filter_id = self.canvas.create_image(
-                        x + 25, self.row_height // 2,
+                        icon_x, icon_y,
                         image=self.filter_img, anchor="center",
                         tags=("filter_icon",)
                     )
-                    self.canvas.tag_bind(
-                        filter_id,
-                        "<Enter>",
-                        lambda e,
-                        cx=x + 25,
-                        cy=self.row_height // 2:
-                        self.icon_hover_enter(cx, cy)
-                    )
-
-                    self.canvas.tag_bind(
-                        filter_id,
-                        "<Leave>",
-                        lambda e:
-                        self.icon_hover_leave()
+                    self.icon_positions[filter_id] = (icon_x, icon_y)
+                    self.canvas.tag_bind(filter_id, "<Enter>", lambda e, fid=filter_id, fx=icon_x, fy=icon_y: self.icon_hover_enter(e, fid, fx, fy))
+                    self.canvas.tag_bind(filter_id, "<Leave>", self.icon_hover_leave)
+                    self.canvas.tag_bind(filter_id, "<Button-1>", self.on_filter_click)
+                    
+                    self.canvas.create_text(
+                        x + width // 2 + 15, self.row_height // 2,
+                        text=col, font=("Advent Pro", 16, "bold"), fill="#2B2B2B"
                     )
                 else:
                     self.canvas.create_text(
@@ -553,63 +569,35 @@ class DashboardFrame(ctk.CTkFrame):
                 )
                 
                 if col_idx == 0:
+                    icon_x = x + 25
+                    icon_y = y + self.row_height // 2
+                    
                     if self.info_img:
-                        # Создаем значок информации
                         info_id = self.canvas.create_image(
-                            x + 25, y + self.row_height // 2,
+                            icon_x, icon_y,
                             image=self.info_img, anchor="center",
                             tags=(f"info_{row}",)
                         )
-                        self.canvas.tag_bind(
-                            info_id,
-                            "<Enter>",
-                            lambda e,
-                            cx=x + 25,
-                            cy=y + self.row_height // 2:
-                            self.icon_hover_enter(cx, cy)
-                        )
-
-                        self.canvas.tag_bind(
-                            info_id,
-                            "<Leave>",
-                            lambda e:
-                            self.icon_hover_leave()
-                        )
+                        self.icon_positions[info_id] = (icon_x, icon_y)
+                        self.canvas.tag_bind(info_id, "<Enter>", lambda e, fid=info_id, fx=icon_x, fy=icon_y: self.icon_hover_enter(e, fid, fx, fy))
+                        self.canvas.tag_bind(info_id, "<Leave>", self.icon_hover_leave)
                         self.canvas.tag_bind(info_id, "<Button-1>", lambda e, r=row: self.on_info_click_by_row(r))
-                        
-                        data = self.table_data.get(row, {}).get(col, "")
-                        self.canvas.create_text(
-                            x + width // 2 + 20, y + self.row_height // 2,
-                            text=data, font=("Advent Pro", 16), fill="black"
-                        )
                     else:
                         info_id = self.canvas.create_text(
-                            x + 25, y + self.row_height // 2,
+                            icon_x, icon_y,
                             text="ⓘ", font=("Advent Pro", 20, "bold"), fill="black",
                             tags=(f"info_{row}",)
                         )
-                        self.canvas.tag_bind(
-                            info_id,
-                            "<Enter>",
-                            lambda e,
-                            cx=x + 25,
-                            cy=y + self.row_height // 2:
-                            self.icon_hover_enter(cx, cy)
-                        )
-
-                        self.canvas.tag_bind(
-                            info_id,
-                            "<Leave>",
-                            lambda e:
-                            self.icon_hover_leave()
-                        )
+                        self.icon_positions[info_id] = (icon_x, icon_y)
+                        self.canvas.tag_bind(info_id, "<Enter>", lambda e, fid=info_id, fx=icon_x, fy=icon_y: self.icon_hover_enter(e, fid, fx, fy))
+                        self.canvas.tag_bind(info_id, "<Leave>", self.icon_hover_leave)
                         self.canvas.tag_bind(info_id, "<Button-1>", lambda e, r=row: self.on_info_click_by_row(r))
-                        
-                        data = self.table_data.get(row, {}).get(col, "")
-                        self.canvas.create_text(
-                            x + width // 2 + 20, y + self.row_height // 2,
-                            text=data, font=("Advent Pro", 16), fill="black"
-                        )
+                    
+                    data = self.table_data.get(row, {}).get(col, "")
+                    self.canvas.create_text(
+                        x + width // 2 + 20, icon_y,
+                        text=data, font=("Advent Pro", 16), fill="black"
+                    )
                 elif col == "":
                     pass
                 else:
@@ -633,102 +621,60 @@ class DashboardFrame(ctk.CTkFrame):
             center_x = button_col_x + button_col_width // 2
             
             # Кнопка редактирования
+            edit_x = center_x - 20
             if self.edit_img:
                 edit_id = self.canvas.create_image(
-                    center_x - 20, center_y,
+                    edit_x, center_y,
                     image=self.edit_img, anchor="center",
                     tags=(f"edit_{row}",)
                 )
-                self.canvas.tag_bind(
-                    edit_id,
-                    "<Enter>",
-                    lambda e,
-                    cx=center_x - 20,
-                    cy=center_y:
-                    self.icon_hover_enter(cx, cy)
-                )
-
-                self.canvas.tag_bind(
-                    edit_id,
-                    "<Leave>",
-                    lambda e:
-                    self.icon_hover_leave()
-                )
+                self.icon_positions[edit_id] = (edit_x, center_y)
+                self.canvas.tag_bind(edit_id, "<Enter>", lambda e, fid=edit_id, fx=edit_x, fy=center_y: self.icon_hover_enter(e, fid, fx, fy))
+                self.canvas.tag_bind(edit_id, "<Leave>", self.icon_hover_leave)
                 self.canvas.tag_bind(edit_id, "<Button-1>", lambda e, r=row: self.on_edit_click_by_row(r))
             else:
                 edit_id = self.canvas.create_text(
-                    center_x - 20, center_y,
+                    edit_x, center_y,
                     text="✎", font=("Advent Pro", 18), fill="black",
                     tags=(f"edit_{row}",)
                 )
-                self.canvas.tag_bind(
-                    edit_id,
-                    "<Enter>",
-                    lambda e,
-                    cx=center_x - 20,
-                    cy=center_y:
-                    self.icon_hover_enter(cx, cy)
-                )
-
-                self.canvas.tag_bind(
-                    edit_id,
-                    "<Leave>",
-                    lambda e:
-                    self.icon_hover_leave()
-                )
+                self.icon_positions[edit_id] = (edit_x, center_y)
+                self.canvas.tag_bind(edit_id, "<Enter>", lambda e, fid=edit_id, fx=edit_x, fy=center_y: self.icon_hover_enter(e, fid, fx, fy))
+                self.canvas.tag_bind(edit_id, "<Leave>", self.icon_hover_leave)
                 self.canvas.tag_bind(edit_id, "<Button-1>", lambda e, r=row: self.on_edit_click_by_row(r))
             
             # Кнопка удаления
+            delete_x = center_x + 20
             if self.delete_img:
                 delete_id = self.canvas.create_image(
-                    center_x + 20, center_y,
+                    delete_x, center_y,
                     image=self.delete_img, anchor="center",
                     tags=(f"delete_{row}",)
                 )
-                self.canvas.tag_bind(
-                    delete_id,
-                    "<Enter>",
-                    lambda e,
-                    cx=center_x + 20,
-                    cy=center_y:
-                    self.icon_hover_enter(cx, cy)
-                )
-
-                self.canvas.tag_bind(
-                    delete_id,
-                    "<Leave>",
-                    lambda e:
-                    self.icon_hover_leave()
-                )
+                self.icon_positions[delete_id] = (delete_x, center_y)
+                self.canvas.tag_bind(delete_id, "<Enter>", lambda e, fid=delete_id, fx=delete_x, fy=center_y: self.icon_hover_enter(e, fid, fx, fy))
+                self.canvas.tag_bind(delete_id, "<Leave>", self.icon_hover_leave)
                 self.canvas.tag_bind(delete_id, "<Button-1>", lambda e, r=row: self.on_delete_click_by_row(r))
             else:
                 delete_id = self.canvas.create_text(
-                    center_x + 20, center_y,
+                    delete_x, center_y,
                     text="🗑", font=("Advent Pro", 18), fill="black",
                     tags=(f"delete_{row}",)
                 )
-                self.canvas.tag_bind(
-                    delete_id,
-                    "<Enter>",
-                    lambda e,
-                    cx=center_x + 20,
-                    cy=center_y:
-                    self.icon_hover_enter(cx, cy)
-                )
-
-                self.canvas.tag_bind(
-                    delete_id,
-                    "<Leave>",
-                    lambda e:
-                    self.icon_hover_leave()
-                )
+                self.icon_positions[delete_id] = (delete_x, center_y)
+                self.canvas.tag_bind(delete_id, "<Enter>", lambda e, fid=delete_id, fx=delete_x, fy=center_y: self.icon_hover_enter(e, fid, fx, fy))
+                self.canvas.tag_bind(delete_id, "<Leave>", self.icon_hover_leave)
                 self.canvas.tag_bind(delete_id, "<Button-1>", lambda e, r=row: self.on_delete_click_by_row(r))
         
-        # Перерисовываем рамки ячеек поверх всего
+        # Рисуем черные рамки поверх всего, но НЕ поверх иконок
         self.redraw_borders()
+        
+        # Поднимаем все иконки на самый верх, чтобы они были видны поверх рамок
+        for icon_id in self.icon_positions:
+            self.canvas.tag_raise(icon_id)
 
     def redraw_borders(self):
-        """Перерисовывает черные рамки поверх подсветки"""
+        """Перерисовывает черные рамки"""
         total_width = sum(self.widths)
         total_height = (self.rows + 1) * self.row_height
         
@@ -742,53 +688,6 @@ class DashboardFrame(ctk.CTkFrame):
         for width in self.widths:
             x += width
             self.canvas.create_line(x, 0, x, total_height, fill="black", width=1, tags="border_line")
-
-    def highlight_cell(self, x, y, width, height):
-        """Подсветить ячейку серым цветом"""
-        # Удаляем предыдущую подсветку
-        if self.highlighted_rect:
-            self.canvas.delete(self.highlighted_rect)
-        
-        # Создаем новую подсветку
-        self.highlighted_rect = self.canvas.create_rectangle(
-            x, y, x + width, y + height,
-            fill="#C8B57E", outline=""
-        )
-        # Отправляем подсветку на задний план
-        self.canvas.tag_lower(self.highlighted_rect)
-        self.highlighted_coords = (x, y, width, height)
-    
-    def unhighlight_cell(self):
-        """Убрать подсветку ячейки"""
-        if self.highlighted_rect:
-            self.canvas.delete(self.highlighted_rect)
-            self.highlighted_rect = None
-            self.highlighted_coords = None
-    def icon_hover_enter(self, x, y):
-            """Подсветка только области значка"""
-
-            if self.hover_icon_bg:
-                self.canvas.delete(self.hover_icon_bg)
-
-            self.hover_icon_bg = self.canvas.create_rectangle(
-                x - 20,
-                y - 20,
-                x + 20,
-                y + 20,
-                fill="#C8B57E",
-                outline="#C8B57E",
-                width=1
-            )
-
-            self.canvas.tag_lower(self.hover_icon_bg)
-
-
-    def icon_hover_leave(self):
-            """Убрать подсветку значка"""
-
-            if self.hover_icon_bg:
-                self.canvas.delete(self.hover_icon_bg)
-                self.hover_icon_bg = None
 
     # ==========================================
     # ОБРАБОТЧИКИ КЛИКОВ

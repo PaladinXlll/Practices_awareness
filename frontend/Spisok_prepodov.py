@@ -150,11 +150,6 @@ def toggle_fullscreen(event=None):
     global is_fullscreen
     is_fullscreen = not is_fullscreen
     root.attributes('-fullscreen', is_fullscreen)
-    if is_fullscreen:
-        root.resizable(True, True)
-    else:
-        root.geometry("1280x910")
-        root.resizable(False, False)
     root.update_idletasks()
     update_layout()
 
@@ -189,7 +184,7 @@ def on_button_click(event):
         delete_row(row)
 
 def draw_table():
-    """Рисует таблицу и кнопки"""
+    """Рисует таблицу и кнопки с чёрной рамкой вокруг всей таблицы и подсветкой всех иконок"""
     width = main_canvas.winfo_width()
     height = main_canvas.winfo_height()
     
@@ -198,7 +193,8 @@ def draw_table():
     
     main_canvas.delete("all")
     
-    radius = 20
+    # Рисуем фон с закругленными углами
+    radius = min(20, width // 10, height // 10)
     main_canvas.create_polygon(
         radius, 0,
         width - radius, 0,
@@ -222,6 +218,12 @@ def draw_table():
     
     x1 = col1_width
     x2 = col1_width + col2_width
+    
+    # Рисуем ВНЕШНЮЮ ЧЁРНУЮ РАМКУ вокруг всей таблицы
+    main_canvas.create_rectangle(
+        0, 0, width, height,
+        outline="black", width=2, fill=""
+    )
     
     main_canvas.create_line(x1, 0, x1, height, fill="black", width=1)
     main_canvas.create_line(x2, 0, x2, height, fill="black", width=1)
@@ -278,27 +280,70 @@ def draw_table():
         
         for row in range(1, rows):
             y_center = (row * row_height) + (row_height / 2)
-            main_canvas.create_image(col3_center_x - 15, y_center, image=images["edit"], anchor="center", tags=f"edit_{row}")
-            main_canvas.create_image(col3_center_x + 15, y_center, image=images["delete"], anchor="center", tags=f"delete_{row}")
+            
+            # Кнопка редактирования
+            edit_btn = main_canvas.create_image(
+                col3_center_x - 15, y_center, 
+                image=images["edit"], anchor="center"
+            )
+            
+            # Подсветка для кнопки редактирования (маленький квадрат)
+            main_canvas.tag_bind(edit_btn, "<Enter>", lambda e, btn=edit_btn, x=col3_center_x - 15, y=y_center: highlight_button(btn, x, y))
+            main_canvas.tag_bind(edit_btn, "<Leave>", lambda e, btn=edit_btn: unhighlight_button(btn))
+            main_canvas.tag_bind(edit_btn, "<Button-1>", lambda e, r=row: edit_row(r))
+            
+            # Кнопка удаления
+            delete_btn = main_canvas.create_image(
+                col3_center_x + 15, y_center, 
+                image=images["delete"], anchor="center"
+            )
+            
+            # Подсветка для кнопки удаления (маленький квадрат)
+            main_canvas.tag_bind(delete_btn, "<Enter>", lambda e, btn=delete_btn, x=col3_center_x + 15, y=y_center: highlight_button(btn, x, y))
+            main_canvas.tag_bind(delete_btn, "<Leave>", lambda e, btn=delete_btn: unhighlight_button(btn))
+            main_canvas.tag_bind(delete_btn, "<Button-1>", lambda e, r=row: delete_row(r))
+
+def highlight_button(btn_id, x, y):
+    """Подсветка кнопки - маленький квадрат за кнопкой"""
+    # Удаляем предыдущую подсветку если есть
+    if hasattr(main_canvas, "current_highlight"):
+        main_canvas.delete(main_canvas.current_highlight)
+    
+    # Рисуем маленький квадрат-подсветку за кнопкой (размер под иконку 25x25)
+    main_canvas.current_highlight = main_canvas.create_rectangle(
+        x - 14, y - 14, x + 14, y + 14,
+        fill="#C8B57E", outline=""
+    )
+    # Опускаем подсветку под кнопку
+    main_canvas.tag_lower(main_canvas.current_highlight, btn_id)
+
+def unhighlight_button(btn_id):
+    """Убираем подсветку кнопки"""
+    if hasattr(main_canvas, "current_highlight"):
+        main_canvas.delete(main_canvas.current_highlight)
+        main_canvas.current_highlight = None
 
 def update_layout(event=None):
     """Обновляет размеры элементов при изменении окна"""
     width = root.winfo_width()
     height = root.winfo_height()
     
-    canopy.config(width=width)
-    canopy.place(x=0, y=0, width=width)
+    # Обновляем размер козырька
+    canopy.configure(width=width)
     
-    bar.config(width=width)
-    bar.place(x=0, y=150.5, width=width)
-    
-    teachers_container.config(width=width)
+    # Обновляем размер контейнера между козырьком и линией
+    teachers_container.configure(width=width)
     teachers_container.place(x=0, y=99, width=width)
     
+    # Обновляем размер полосы
+    bar.configure(width=width)
+    bar.place(x=0, y=150.5, width=width)
+    
+    # Обновляем размер основного канваса
     new_width = max(10, width - 40)
     new_height = max(10, height - 187)
     
-    main_canvas.config(width=new_width, height=new_height)
+    main_canvas.configure(width=new_width, height=new_height)
     main_canvas.place(x=20, y=167, width=new_width, height=new_height)
     
     draw_table()
@@ -367,6 +412,9 @@ try:
         )
         logo_label.image = logo_img
         logo_label.pack(side="right", padx=20, pady=10)
+        # Подсветка для логотипа
+        logo_label.bind("<Enter>", lambda e: logo_label.config(bg='#7a5518'))
+        logo_label.bind("<Leave>", lambda e: logo_label.config(bg='#986722'))
 except Exception as e:
     print(f"Ошибка загрузки логотипа: {e}")
 
@@ -380,7 +428,7 @@ teachers_container.pack_propagate(False)
 teachers_inner = tk.Frame(teachers_container, bg='#DBC685')
 teachers_inner.pack(side="left", padx=20)
 
-# Картинка main.png
+# Картинка main.png с подсветкой
 try:
     icon_path = "frontend/assets/main.png"
     if os.path.exists(icon_path):
@@ -396,6 +444,9 @@ try:
         )
         icon_label.image = main_icon
         icon_label.pack(side="left", padx=(0, 10))
+        # Подсветка для main.png
+        icon_label.bind("<Enter>", lambda e: icon_label.config(bg='#C8B57E'))
+        icon_label.bind("<Leave>", lambda e: icon_label.config(bg='#DBC685'))
 except Exception as e:
     print(f"Ошибка загрузки main.png: {e}")
 
@@ -414,7 +465,7 @@ teachers_label = tk.Label(
 )
 teachers_label.pack(side="left")
 
-# Кнопка "Добавить"
+# Кнопка "Добавить" (create.png) с подсветкой
 try:
     create_path = "frontend/assets/create.png"
     if os.path.exists(create_path):
@@ -427,11 +478,13 @@ try:
             image=create_icon,
             bg='#DBC685',
             bd=0,
-            cursor="hand2",
             command=add_row
         )
         create_button.image = create_icon
         create_button.pack(side="right", padx=20)
+        # Подсветка для кнопки добавления
+        create_button.bind("<Enter>", lambda e: create_button.config(bg='#C8B57E'))
+        create_button.bind("<Leave>", lambda e: create_button.config(bg='#DBC685'))
 except Exception as e:
     print(f"Ошибка загрузки create.png: {e}")
 
