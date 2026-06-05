@@ -64,23 +64,3 @@ def get_control_by_id(control_id):
         columns=["control_id", "name"]
     )
 
-if __name__ == "__main__":
-    print("LEVELS:")
-    print(get_levels())
-
-    print("LEVEL BY ID:")
-    print(get_level_by_id(1))
-
-    print("TYPES:")
-    print(get_types())
-
-    print("TYPE BY ID:")
-    print(get_type_by_id(1))
-
-    print("CONTROLS:")
-    print(get_controls())
-
-    print("CONTROL BY ID:")
-    print(get_control_by_id(1))
-
-

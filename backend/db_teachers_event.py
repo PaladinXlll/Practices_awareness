@@ -100,11 +100,3 @@ def get_teacher_events(teacher_id):
 
     return execute_select(query, (teacher_id,))
 
-if __name__ == "__main__":
-    print("Преподаватели мероприятия:")
-    print(get_event_teachers(1))
-
-    print("Мероприятия преподавателя:")
-    print(get_teacher_events(1))
-
-

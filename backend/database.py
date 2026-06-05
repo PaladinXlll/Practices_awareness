@@ -28,3 +28,4 @@ def get_connection():
     except Error as e:
         print(f"️ Ошибка подключения к MySQL: {e}")
         return None
+

@@ -128,20 +128,25 @@ def execute_select(query, params=None, fetchone=False):
 
 
 def get_data(table, record_id=None, columns=None):
-    check_sql_safety(table, columns)
+    try:
+        check_sql_safety(table, columns)
 
-    if columns:
-        columns_sql = ", ".join(columns)
-    else:
-        columns_sql = "*"
+        if columns:
+            columns_sql = ", ".join(columns)
+        else:
+            columns_sql = "*"
 
-    if record_id is not None:
-        primary_key = get_primary_key(table)
-        query = f"SELECT {columns_sql} FROM {table} WHERE {primary_key} = %s"
-        return execute_query(query, (record_id,), fetchone=True)
+        if record_id is not None:
+            primary_key = get_primary_key(table)
+            query = f"SELECT {columns_sql} FROM {table} WHERE {primary_key} = %s"
+            return execute_query(query, (record_id,), fetchone=True)
 
-    query = f"SELECT {columns_sql} FROM {table}"
-    return execute_query(query, fetchall=True)
+        query = f"SELECT {columns_sql} FROM {table}"
+        return execute_query(query, fetchall=True)
+
+    except ValueError as e:
+        print(f"Ошибка безопасности SQL: {e}")
+        return None
 
 
 def add_data(table, columns, values):
