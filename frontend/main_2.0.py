@@ -98,7 +98,7 @@ class App(ctk.CTk):
 
 
 # ==========================================
-# DASHBOARD (ТАБЛИЦА НА CANVAS С ЧЁРНЫМИ ЛИНИЯМИ)
+# DASHBOARD (ТАБЛИЦА НА CANVAS)
 # ==========================================
 
 class DashboardFrame(ctk.CTkFrame):
@@ -111,6 +111,10 @@ class DashboardFrame(ctk.CTkFrame):
         self.current_row = 1
         self.rows = 15
         self.cols = 8
+        
+        # Хранилище для Entry виджетов при редактировании
+        self.edit_entries = {}
+        self.editing_row = None
 
         # Ширина столбцов
         self.base_widths = [200, 250, 250, 150, 150, 200, 200, 100]
@@ -131,9 +135,11 @@ class DashboardFrame(ctk.CTkFrame):
         # Высота строки
         self.row_height = 50
 
-        # Хранилище для подсветки иконок
-        self.hover_icon_bg = None
-        self.icon_positions = {}  # {icon_id: (x, y)}
+        # Цвет ячейки
+        self.cell_color = "#E9DCB0"
+        
+        # Цвет при наведении (как у кнопки выхода)
+        self.hover_color = "#C8B57E"
 
         # ==========================================
         # ВЕРХНЯЯ ПАНЕЛЬ С КНОПКАМИ
@@ -164,7 +170,7 @@ class DashboardFrame(ctk.CTkFrame):
                 text="",
                 width=40,
                 fg_color="transparent",
-                hover_color="#C8B57E",
+                hover_color=self.hover_color,
                 command=self.show_exit_dialog
             )
         else:
@@ -173,7 +179,7 @@ class DashboardFrame(ctk.CTkFrame):
                 text="←",
                 width=40,
                 fg_color="transparent",
-                hover_color="#C8B57E",
+                hover_color=self.hover_color,
                 text_color="black",
                 font=("Advent Pro", 24),
                 command=self.show_exit_dialog
@@ -204,7 +210,7 @@ class DashboardFrame(ctk.CTkFrame):
                 text="",
                 width=40,
                 fg_color="transparent",
-                hover_color="#C8B57E",
+                hover_color=self.hover_color,
                 command=self.add_row
             )
         else:
@@ -213,7 +219,7 @@ class DashboardFrame(ctk.CTkFrame):
                 text="+",
                 width=40,
                 fg_color="transparent",
-                hover_color="#C8B57E",
+                hover_color=self.hover_color,
                 text_color="black",
                 font=("Arial", 30),
                 command=self.add_row
@@ -227,7 +233,7 @@ class DashboardFrame(ctk.CTkFrame):
             font=("Advent Pro", 20, "bold"),
             fg_color="transparent",
             text_color="black",
-            hover_color="#C8B57E",
+            hover_color=self.hover_color,
             corner_radius=10,
             width=320,
             height=40,
@@ -274,7 +280,9 @@ class DashboardFrame(ctk.CTkFrame):
         self.info_img = None
         self.edit_img = None
         self.delete_img = None
+        self.save_img = None
         
+        # Загрузка иконки фильтра
         filter_paths = ["frontend/assets/filter.png", "assets/filter.png", "filter.png"]
         for path in filter_paths:
             try:
@@ -285,6 +293,7 @@ class DashboardFrame(ctk.CTkFrame):
             except:
                 pass
         
+        # Загрузка иконки информации
         info_paths = ["frontend/assets/info.png", "assets/info.png", "info.png"]
         for path in info_paths:
             try:
@@ -295,6 +304,7 @@ class DashboardFrame(ctk.CTkFrame):
             except:
                 pass
         
+        # Загрузка иконки редактирования
         edit_paths = ["frontend/assets/edit.png", "assets/edit.png", "edit.png"]
         for path in edit_paths:
             try:
@@ -305,6 +315,7 @@ class DashboardFrame(ctk.CTkFrame):
             except:
                 pass
         
+        # Загрузка иконки удаления
         delete_paths = ["frontend/assets/delete.png", "assets/delete.png", "delete.png"]
         for path in delete_paths:
             try:
@@ -314,6 +325,17 @@ class DashboardFrame(ctk.CTkFrame):
                     break
             except:
                 pass
+        
+        # Создаём зелёную галочку для сохранения
+        try:
+            save_path = "frontend/assets/save.png"
+            if os.path.exists(save_path):
+                save_image = Image.open(save_path)
+                self.save_img = ImageTk.PhotoImage(save_image.resize((28, 28)))
+            else:
+                self.save_img = self.create_checkmark_image()
+        except:
+            self.save_img = self.create_checkmark_image()
 
         # Создаем фрейм для таблицы
         self.table_frame = tk.Frame(self.canvas, bg="#E6D7A8")
@@ -325,6 +347,15 @@ class DashboardFrame(ctk.CTkFrame):
 
         # Рисуем таблицу
         self.draw_table()
+
+    def create_checkmark_image(self):
+        """Создаёт зелёную галочку программно"""
+        img = Image.new('RGBA', (28, 28), (0, 0, 0, 0))
+        from PIL import ImageDraw
+        draw = ImageDraw.Draw(img)
+        draw.line((5, 14, 11, 20), fill='#27AE60', width=3)
+        draw.line((11, 20, 23, 8), fill='#27AE60', width=3)
+        return ImageTk.PhotoImage(img)
 
     # ==========================================
     # МЕТОД ДЛЯ РЕДАКТИРОВАНИЯ СПИСКА ПРЕПОДАВАТЕЛЕЙ
@@ -387,7 +418,7 @@ class DashboardFrame(ctk.CTkFrame):
             width=120,
             height=35,
             fg_color="#986722",
-            hover_color="#7A5C3B",
+            hover_color=self.hover_color,
             text_color="white",
             corner_radius=10,
             command=edit_window.destroy
@@ -458,14 +489,14 @@ class DashboardFrame(ctk.CTkFrame):
 
         confirm_btn = ctk.CTkButton(
             buttons, text=confirm_text, width=125, height=45, corner_radius=0,
-            fg_color="#D8CCA3", hover_color="#C8B57E", text_color="#555555",
+            fg_color="#D8CCA3", hover_color=self.hover_color, text_color="#555555",
             command=lambda: [command(), dialog.destroy()]
         )
         confirm_btn.pack(side="left")
 
         cancel_btn = ctk.CTkButton(
             buttons, text="Отмена", width=125, height=45, corner_radius=0,
-            fg_color="#D8CCA3", hover_color="#C8B57E", text_color="#777777",
+            fg_color="#D8CCA3", hover_color=self.hover_color, text_color="#777777",
             command=dialog.destroy
         )
         cancel_btn.pack(side="right")
@@ -474,38 +505,12 @@ class DashboardFrame(ctk.CTkFrame):
         self.custom_dialog("Выход", "Вы точно хотите\nвыйти?", "Выход", self.master.destroy)
 
     # ==========================================
-    # ПОДСВЕТКА ИКОНОК
-    # ==========================================
-
-    def icon_hover_enter(self, event, icon_id, x, y):
-        """Подсветка иконки при наведении - рисуем ПОВЕРХ всего"""
-        # Удаляем предыдущую подсветку
-        if self.hover_icon_bg:
-            self.canvas.delete(self.hover_icon_bg)
-        
-        # Создаем новую подсветку
-        self.hover_icon_bg = self.canvas.create_rectangle(
-            x - 18, y - 18, x + 18, y + 18,
-            fill="#C8B57E", outline="#C8B57E", width=2
-        )
-        # Поднимаем подсветку на самый верх
-        self.canvas.tag_raise(self.hover_icon_bg)
-        # Поднимаем иконку над подсветкой
-        self.canvas.tag_raise(icon_id)
-
-    def icon_hover_leave(self, event):
-        """Убрать подсветку иконки"""
-        if self.hover_icon_bg:
-            self.canvas.delete(self.hover_icon_bg)
-            self.hover_icon_bg = None
-
-    # ==========================================
     # РИСОВАНИЕ ТАБЛИЦЫ
     # ==========================================
 
     def draw_table(self):
         self.canvas.delete("all")
-        self.icon_positions.clear()
+        self.edit_entries.clear()
         
         total_width = sum(self.widths)
         total_height = (self.rows + 1) * self.row_height
@@ -522,22 +527,35 @@ class DashboardFrame(ctk.CTkFrame):
         for i, (col, width) in enumerate(zip(self.columns, self.widths)):
             self.canvas.create_rectangle(
                 x, 0, x + width, self.row_height,
-                fill="#E9DCB0", outline="black", width=1
+                fill="#D9C998", outline="black", width=1
             )
             
             if i == 0:
                 if self.filter_img:
-                    icon_x = x + 25
-                    icon_y = self.row_height // 2
-                    filter_id = self.canvas.create_image(
-                        icon_x, icon_y,
-                        image=self.filter_img, anchor="center",
-                        tags=("filter_icon",)
+                    # Создаём кнопку фильтра с эффектом наведения
+                    filter_btn = tk.Button(
+                        self.canvas,
+                        image=self.filter_img,
+                        bg="#D9C998",
+                        bd=0,
+                        cursor="hand2",
+                        command=self.on_filter_click
                     )
-                    self.icon_positions[filter_id] = (icon_x, icon_y)
-                    self.canvas.tag_bind(filter_id, "<Enter>", lambda e, fid=filter_id, fx=icon_x, fy=icon_y: self.icon_hover_enter(e, fid, fx, fy))
-                    self.canvas.tag_bind(filter_id, "<Leave>", self.icon_hover_leave)
-                    self.canvas.tag_bind(filter_id, "<Button-1>", self.on_filter_click)
+                    filter_btn.image = self.filter_img
+                    
+                    # Эффект наведения
+                    def on_enter(e, btn=filter_btn):
+                        btn.config(bg=self.hover_color)
+                    def on_leave(e, btn=filter_btn):
+                        btn.config(bg="#D9C998")
+                    
+                    filter_btn.bind("<Enter>", on_enter)
+                    filter_btn.bind("<Leave>", on_leave)
+                    
+                    self.canvas.create_window(
+                        x + 25, self.row_height // 2,
+                        window=filter_btn, width=28, height=28
+                    )
                     
                     self.canvas.create_text(
                         x + width // 2 + 15, self.row_height // 2,
@@ -563,147 +581,255 @@ class DashboardFrame(ctk.CTkFrame):
             x = 0
             
             for col_idx, (col, width) in enumerate(zip(self.columns, self.widths)):
+                # Рисуем фон ячейки
                 self.canvas.create_rectangle(
                     x, y, x + width, y + self.row_height,
-                    fill="#E9DCB0", outline="black", width=1
+                    fill=self.cell_color, outline="black", width=1
                 )
                 
                 if col_idx == 0:
-                    icon_x = x + 25
-                    icon_y = y + self.row_height // 2
+                    # Кнопка информации с эффектом наведения
+                    btn_bg = self.cell_color
                     
                     if self.info_img:
-                        info_id = self.canvas.create_image(
-                            icon_x, icon_y,
-                            image=self.info_img, anchor="center",
-                            tags=(f"info_{row}",)
+                        info_btn = tk.Button(
+                            self.canvas,
+                            image=self.info_img,
+                            bg=btn_bg,
+                            bd=0,
+                            cursor="hand2",
+                            command=lambda r=row: self.show_info(r)
                         )
-                        self.icon_positions[info_id] = (icon_x, icon_y)
-                        self.canvas.tag_bind(info_id, "<Enter>", lambda e, fid=info_id, fx=icon_x, fy=icon_y: self.icon_hover_enter(e, fid, fx, fy))
-                        self.canvas.tag_bind(info_id, "<Leave>", self.icon_hover_leave)
-                        self.canvas.tag_bind(info_id, "<Button-1>", lambda e, r=row: self.on_info_click_by_row(r))
+                        info_btn.image = self.info_img
                     else:
-                        info_id = self.canvas.create_text(
-                            icon_x, icon_y,
-                            text="ⓘ", font=("Advent Pro", 20, "bold"), fill="black",
-                            tags=(f"info_{row}",)
+                        info_btn = tk.Button(
+                            self.canvas,
+                            text="ⓘ",
+                            font=("Advent Pro", 16, "bold"),
+                            bg=btn_bg,
+                            fg="black",
+                            bd=0,
+                            cursor="hand2",
+                            command=lambda r=row: self.show_info(r)
                         )
-                        self.icon_positions[info_id] = (icon_x, icon_y)
-                        self.canvas.tag_bind(info_id, "<Enter>", lambda e, fid=info_id, fx=icon_x, fy=icon_y: self.icon_hover_enter(e, fid, fx, fy))
-                        self.canvas.tag_bind(info_id, "<Leave>", self.icon_hover_leave)
-                        self.canvas.tag_bind(info_id, "<Button-1>", lambda e, r=row: self.on_info_click_by_row(r))
                     
-                    data = self.table_data.get(row, {}).get(col, "")
-                    self.canvas.create_text(
-                        x + width // 2 + 20, icon_y,
-                        text=data, font=("Advent Pro", 16), fill="black"
+                    # Эффект наведения
+                    def on_enter(e, btn=info_btn):
+                        btn.config(bg=self.hover_color)
+                    def on_leave(e, btn=info_btn):
+                        btn.config(bg=btn_bg)
+                    
+                    info_btn.bind("<Enter>", on_enter)
+                    info_btn.bind("<Leave>", on_leave)
+                    
+                    self.canvas.create_window(
+                        x + 25, y + self.row_height // 2,
+                        window=info_btn, width=28, height=28
                     )
+                    
+                    # Текст или поле ввода
+                    if self.editing_row == row:
+                        entry = tk.Entry(
+                            self.canvas,
+                            font=("Advent Pro", 14),
+                            bg=self.cell_color,
+                            fg="black",
+                            relief="flat",
+                            bd=0,
+                            highlightthickness=1,
+                            highlightcolor="#986722",
+                            highlightbackground="#986722"
+                        )
+                        entry.insert(0, self.table_data.get(row, {}).get(col, ""))
+                        entry_id = self.canvas.create_window(
+                            x + width // 2 + 20, y + self.row_height // 2,
+                            window=entry, width=width - 80, height=self.row_height - 10
+                        )
+                        self.edit_entries[(row, col)] = entry
+                    else:
+                        data = self.table_data.get(row, {}).get(col, "")
+                        self.canvas.create_text(
+                            x + width // 2 + 20, y + self.row_height // 2,
+                            text=data, font=("Advent Pro", 16), fill="black"
+                        )
+                        
                 elif col == "":
-                    pass
-                else:
-                    data = self.table_data.get(row, {}).get(col, "")
-                    self.canvas.create_text(
-                        x + width // 2, y + self.row_height // 2,
-                        text=data, font=("Advent Pro", 16), fill="black"
+                    # Кнопки редактирования/сохранения и удаления
+                    btn_bg = self.cell_color
+                    
+                    if self.editing_row == row:
+                        # Кнопка сохранения
+                        save_btn = tk.Button(
+                            self.canvas,
+                            image=self.save_img,
+                            bg=btn_bg,
+                            bd=0,
+                            cursor="hand2",
+                            command=lambda r=row: self.save_row(r)
+                        )
+                        save_btn.image = self.save_img
+                        
+                        # Эффект наведения
+                        def on_enter_save(e, btn=save_btn):
+                            btn.config(bg=self.hover_color)
+                        def on_leave_save(e, btn=save_btn):
+                            btn.config(bg=btn_bg)
+                        
+                        save_btn.bind("<Enter>", on_enter_save)
+                        save_btn.bind("<Leave>", on_leave_save)
+                        
+                        self.canvas.create_window(
+                            x + width // 2 - 20, y + self.row_height // 2,
+                            window=save_btn, width=34, height=34
+                        )
+                    else:
+                        # Кнопка редактирования
+                        if self.edit_img:
+                            edit_btn = tk.Button(
+                                self.canvas,
+                                image=self.edit_img,
+                                bg=btn_bg,
+                                bd=0,
+                                cursor="hand2",
+                                command=lambda r=row: self.start_edit(r)
+                            )
+                            edit_btn.image = self.edit_img
+                        else:
+                            edit_btn = tk.Button(
+                                self.canvas,
+                                text="✎",
+                                font=("Advent Pro", 16),
+                                bg=btn_bg,
+                                fg="black",
+                                bd=0,
+                                cursor="hand2",
+                                command=lambda r=row: self.start_edit(r)
+                            )
+                        
+                        # Эффект наведения
+                        def on_enter_edit(e, btn=edit_btn):
+                            btn.config(bg=self.hover_color)
+                        def on_leave_edit(e, btn=edit_btn):
+                            btn.config(bg=btn_bg)
+                        
+                        edit_btn.bind("<Enter>", on_enter_edit)
+                        edit_btn.bind("<Leave>", on_leave_edit)
+                        
+                        self.canvas.create_window(
+                            x + width // 2 - 20, y + self.row_height // 2,
+                            window=edit_btn, width=34, height=34
+                        )
+                    
+                    # Кнопка удаления
+                    if self.delete_img:
+                        delete_btn = tk.Button(
+                            self.canvas,
+                            image=self.delete_img,
+                            bg=btn_bg,
+                            bd=0,
+                            cursor="hand2",
+                            command=lambda r=row: self.delete_row(r)
+                        )
+                        delete_btn.image = self.delete_img
+                    else:
+                        delete_btn = tk.Button(
+                            self.canvas,
+                            text="🗑",
+                            font=("Advent Pro", 16),
+                            bg=btn_bg,
+                            fg="black",
+                            bd=0,
+                            cursor="hand2",
+                            command=lambda r=row: self.delete_row(r)
+                        )
+                    
+                    # Эффект наведения
+                    def on_enter_delete(e, btn=delete_btn):
+                        btn.config(bg=self.hover_color)
+                    def on_leave_delete(e, btn=delete_btn):
+                        btn.config(bg=btn_bg)
+                    
+                    delete_btn.bind("<Enter>", on_enter_delete)
+                    delete_btn.bind("<Leave>", on_leave_delete)
+                    
+                    self.canvas.create_window(
+                        x + width // 2 + 20, y + self.row_height // 2,
+                        window=delete_btn, width=34, height=34
                     )
+                    
+                else:
+                    # Обычные ячейки
+                    if self.editing_row == row:
+                        entry = tk.Entry(
+                            self.canvas,
+                            font=("Advent Pro", 14),
+                            bg=self.cell_color,
+                            fg="black",
+                            relief="flat",
+                            bd=0,
+                            highlightthickness=1,
+                            highlightcolor="#986722",
+                            highlightbackground="#986722"
+                        )
+                        entry.insert(0, self.table_data.get(row, {}).get(col, ""))
+                        entry_id = self.canvas.create_window(
+                            x + width // 2, y + self.row_height // 2,
+                            window=entry, width=width - 20, height=self.row_height - 10
+                        )
+                        self.edit_entries[(row, col)] = entry
+                    else:
+                        data = self.table_data.get(row, {}).get(col, "")
+                        self.canvas.create_text(
+                            x + width // 2, y + self.row_height // 2,
+                            text=data, font=("Advent Pro", 16), fill="black"
+                        )
                 
                 x += width
         
-        # ==========================================
-        # КНОПКИ (РЕДАКТИРОВАТЬ/УДАЛИТЬ)
-        # ==========================================
-        button_col_x = sum(self.widths[:-1])
-        button_col_width = self.widths[-1]
-        
-        for row in range(1, self.rows + 1):
-            y = row * self.row_height
-            center_y = y + self.row_height // 2
-            center_x = button_col_x + button_col_width // 2
-            
-            # Кнопка редактирования
-            edit_x = center_x - 20
-            if self.edit_img:
-                edit_id = self.canvas.create_image(
-                    edit_x, center_y,
-                    image=self.edit_img, anchor="center",
-                    tags=(f"edit_{row}",)
-                )
-                self.icon_positions[edit_id] = (edit_x, center_y)
-                self.canvas.tag_bind(edit_id, "<Enter>", lambda e, fid=edit_id, fx=edit_x, fy=center_y: self.icon_hover_enter(e, fid, fx, fy))
-                self.canvas.tag_bind(edit_id, "<Leave>", self.icon_hover_leave)
-                self.canvas.tag_bind(edit_id, "<Button-1>", lambda e, r=row: self.on_edit_click_by_row(r))
-            else:
-                edit_id = self.canvas.create_text(
-                    edit_x, center_y,
-                    text="✎", font=("Advent Pro", 18), fill="black",
-                    tags=(f"edit_{row}",)
-                )
-                self.icon_positions[edit_id] = (edit_x, center_y)
-                self.canvas.tag_bind(edit_id, "<Enter>", lambda e, fid=edit_id, fx=edit_x, fy=center_y: self.icon_hover_enter(e, fid, fx, fy))
-                self.canvas.tag_bind(edit_id, "<Leave>", self.icon_hover_leave)
-                self.canvas.tag_bind(edit_id, "<Button-1>", lambda e, r=row: self.on_edit_click_by_row(r))
-            
-            # Кнопка удаления
-            delete_x = center_x + 20
-            if self.delete_img:
-                delete_id = self.canvas.create_image(
-                    delete_x, center_y,
-                    image=self.delete_img, anchor="center",
-                    tags=(f"delete_{row}",)
-                )
-                self.icon_positions[delete_id] = (delete_x, center_y)
-                self.canvas.tag_bind(delete_id, "<Enter>", lambda e, fid=delete_id, fx=delete_x, fy=center_y: self.icon_hover_enter(e, fid, fx, fy))
-                self.canvas.tag_bind(delete_id, "<Leave>", self.icon_hover_leave)
-                self.canvas.tag_bind(delete_id, "<Button-1>", lambda e, r=row: self.on_delete_click_by_row(r))
-            else:
-                delete_id = self.canvas.create_text(
-                    delete_x, center_y,
-                    text="🗑", font=("Advent Pro", 18), fill="black",
-                    tags=(f"delete_{row}",)
-                )
-                self.icon_positions[delete_id] = (delete_x, center_y)
-                self.canvas.tag_bind(delete_id, "<Enter>", lambda e, fid=delete_id, fx=delete_x, fy=center_y: self.icon_hover_enter(e, fid, fx, fy))
-                self.canvas.tag_bind(delete_id, "<Leave>", self.icon_hover_leave)
-                self.canvas.tag_bind(delete_id, "<Button-1>", lambda e, r=row: self.on_delete_click_by_row(r))
-        
-        # Рисуем черные рамки поверх всего, но НЕ поверх иконок
-        self.redraw_borders()
-        
-        # Поднимаем все иконки на самый верх, чтобы они были видны поверх рамок
-        for icon_id in self.icon_positions:
-            self.canvas.tag_raise(icon_id)
+        # Рисуем черные рамки поверх
+        self.draw_borders()
 
-    def redraw_borders(self):
-        """Перерисовывает черные рамки"""
+    def draw_borders(self):
+        """Рисует черные рамки таблицы"""
         total_width = sum(self.widths)
         total_height = (self.rows + 1) * self.row_height
         
-        # Рисуем горизонтальные линии
+        # Горизонтальные линии
         for row in range(self.rows + 2):
             y = row * self.row_height
-            self.canvas.create_line(0, y, total_width, y, fill="black", width=1, tags="border_line")
+            self.canvas.create_line(0, y, total_width, y, fill="black", width=1)
         
-        # Рисуем вертикальные линии
+        # Вертикальные линии
         x = 0
         for width in self.widths:
             x += width
-            self.canvas.create_line(x, 0, x, total_height, fill="black", width=1, tags="border_line")
+            self.canvas.create_line(x, 0, x, total_height, fill="black", width=1)
+
+    def on_filter_click(self):
+        messagebox.showinfo("Фильтр", "Функция фильтрации будет добавлена позже")
 
     # ==========================================
     # ОБРАБОТЧИКИ КЛИКОВ
     # ==========================================
 
-    def on_edit_click_by_row(self, row):
-        self.edit_row(row)
+    def start_edit(self, row):
+        """Начать редактирование строки"""
+        if row not in self.table_data:
+            self.table_data[row] = {col: "" for col in self.columns[:-1]}
+        
+        self.editing_row = row
+        self.draw_table()
 
-    def on_delete_click_by_row(self, row):
-        self.delete_row(row)
-
-    def on_info_click_by_row(self, row):
-        self.show_info(row)
-
-    def on_filter_click(self, event):
-        messagebox.showinfo("Фильтр", "Функция фильтрации будет добавлена позже")
+    def save_row(self, row):
+        """Сохранить изменения в строке"""
+        for (r, col), entry in self.edit_entries.items():
+            if r == row:
+                self.table_data[row][col] = entry.get()
+        
+        self.editing_row = None
+        self.edit_entries.clear()
+        self.draw_table()
+        messagebox.showinfo("Сохранение", f"Изменения в строке {row} сохранены!")
 
     # ==========================================
     # ПОКАЗ ИНФОРМАЦИИ
@@ -728,7 +854,7 @@ class DashboardFrame(ctk.CTkFrame):
         title_entry.insert(0, self.table_data.get(row, {}).get("Название", ""))
         title_entry.configure(state="readonly")
 
-        close_btn = ctk.CTkButton(header, text="✕", width=25, height=25, fg_color="transparent", hover_color="#B89435", text_color="black", font=("Advent Pro", 24), command=info_window.destroy)
+        close_btn = ctk.CTkButton(header, text="✕", width=25, height=25, fg_color="transparent", hover_color=self.hover_color, text_color="black", font=("Advent Pro", 24), command=info_window.destroy)
         close_btn.place(x=420, y=10)
 
         form_frame = ctk.CTkFrame(info_window, fg_color="transparent")
@@ -739,51 +865,6 @@ class DashboardFrame(ctk.CTkFrame):
             label.pack(anchor="w", pady=(10, 2))
             value_label = ctk.CTkLabel(form_frame, text=self.table_data.get(row, {}).get(col, ""), font=("Advent Pro", 14), text_color="#333333", wraplength=400, justify="left")
             value_label.pack(anchor="w", pady=(0, 5))
-
-    # ==========================================
-    # РЕДАКТИРОВАНИЕ СТРОКИ
-    # ==========================================
-
-    def edit_row(self, row):
-        if row not in self.table_data:
-            self.table_data[row] = {col: "" for col in self.columns[:-1]}
-        
-        dialog = ctk.CTkToplevel(self)
-        dialog.geometry("500x600")
-        dialog.title(f"Редактирование строки {row}")
-        dialog.configure(fg_color="#DBC685")
-        dialog.resizable(False, False)
-
-        header = ctk.CTkFrame(dialog, height=50, fg_color="#986722", corner_radius=0)
-        header.pack(fill="x")
-        header_label = ctk.CTkLabel(header, text=f"Редактирование строки {row}", font=("Advent Pro", 20, "bold"), text_color="white")
-        header_label.pack(expand=True)
-
-        form_frame = ctk.CTkFrame(dialog, fg_color="transparent")
-        form_frame.pack(expand=True, fill="both", padx=20, pady=20)
-
-        entries = {}
-        for col in self.columns[:-1]:
-            label = ctk.CTkLabel(form_frame, text=f"{col}:", font=("Advent Pro", 16), text_color="black")
-            label.pack(anchor="w", pady=(0, 5))
-            entry = ctk.CTkEntry(form_frame, width=450, font=("Advent Pro", 14), fg_color="#E9DCB0", border_color="#986722")
-            entry.pack(pady=(0, 15))
-            entry.insert(0, self.table_data[row].get(col, ""))
-            entries[col] = entry
-
-        buttons_frame = ctk.CTkFrame(form_frame, fg_color="transparent")
-        buttons_frame.pack(fill="x", pady=(10, 0))
-
-        def save():
-            for col in self.columns[:-1]:
-                self.table_data[row][col] = entries[col].get()
-            self.draw_table()
-            dialog.destroy()
-
-        save_btn = ctk.CTkButton(buttons_frame, text="Сохранить", font=("Advent Pro", 14, "bold"), fg_color="#986722", hover_color="#7a5518", command=save)
-        save_btn.pack(side="left", padx=5)
-        cancel_btn = ctk.CTkButton(buttons_frame, text="Отмена", font=("Advent Pro", 14, "bold"), fg_color="#986722", hover_color="#7a5518", command=dialog.destroy)
-        cancel_btn.pack(side="left", padx=5)
 
     # ==========================================
     # УДАЛЕНИЕ СТРОКИ
@@ -811,12 +892,14 @@ class DashboardFrame(ctk.CTkFrame):
             if row in self.table_data:
                 for col in self.columns[:-1]:
                     self.table_data[row][col] = ""
+            if self.editing_row == row:
+                self.editing_row = None
             self.draw_table()
             dialog.destroy()
 
-        delete_btn = ctk.CTkButton(buttons_frame, text="Удалить", font=("Advent Pro", 14, "bold"), fg_color="#986722", hover_color="#7a5518", command=confirm_delete)
+        delete_btn = ctk.CTkButton(buttons_frame, text="Удалить", font=("Advent Pro", 14, "bold"), fg_color="#986722", hover_color=self.hover_color, command=confirm_delete)
         delete_btn.pack(side="left", padx=5)
-        cancel_btn = ctk.CTkButton(buttons_frame, text="Отмена", font=("Advent Pro", 14, "bold"), fg_color="#986722", hover_color="#7a5518", command=dialog.destroy)
+        cancel_btn = ctk.CTkButton(buttons_frame, text="Отмена", font=("Advent Pro", 14, "bold"), fg_color="#986722", hover_color=self.hover_color, command=dialog.destroy)
         cancel_btn.pack(side="left", padx=5)
 
     # ==========================================
@@ -826,7 +909,7 @@ class DashboardFrame(ctk.CTkFrame):
     def add_row(self):
         for row in range(1, self.rows + 1):
             if row not in self.table_data:
-                self.edit_row(row)
+                self.start_edit(row)
                 return
             empty = True
             for col in self.columns[:-1]:
@@ -834,13 +917,13 @@ class DashboardFrame(ctk.CTkFrame):
                     empty = False
                     break
             if empty:
-                self.edit_row(row)
+                self.start_edit(row)
                 return
         
         self.rows += 1
         self.table_data[self.rows] = {col: "" for col in self.columns[:-1]}
         self.draw_table()
-        self.edit_row(self.rows)
+        self.start_edit(self.rows)
 
 
 # ==========================================
