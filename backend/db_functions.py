@@ -18,7 +18,7 @@ ALLOWED_COLUMNS = {
 
     "teachers": {"teacher_id", "name", "surname", "patronymic"},
 
-    "events": {
+    "event": {
         "event_id",
         "name",
         "place",
@@ -256,3 +256,5 @@ def authorize_user(login_input, password_input):
 
     print("\nОшибка: Неверный логин или пароль.")
     return None
+
+

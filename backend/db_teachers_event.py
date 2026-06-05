@@ -106,3 +106,5 @@ if __name__ == "__main__":
 
     print("Мероприятия преподавателя:")
     print(get_teacher_events(1))
+
+

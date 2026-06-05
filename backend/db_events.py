@@ -1,7 +1,7 @@
 from db_functions import get_data, add_data, update_data, delete_data
 
 
-TABLE_NAME = "events"
+TABLE_NAME = "event"
 
 COLUMNS = [
     "event_id",
@@ -113,3 +113,4 @@ def delete_event(event_id):
         table=TABLE_NAME,
         record_id=event_id
     )
+

@@ -99,3 +99,4 @@ def validate_event_data(name, place, level, event_date, document, event_type, co
         return False, "Описание слишком длинное"
 
     return True, ""
+

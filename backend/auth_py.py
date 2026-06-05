@@ -1,11 +1,16 @@
 from db_functions import authorize_user
 
+def main():
 
-if __name__ == "__main__":
-    login = input("Введите логин: ")
-    password = input("Введите пароль: ")
+    login = input("Введите логин: ").strip()
+
+    password = input("Введите пароль: ").strip()
 
     authorize_user(
+
         login_input=login,
+
         password_input=password
+
     )
+
