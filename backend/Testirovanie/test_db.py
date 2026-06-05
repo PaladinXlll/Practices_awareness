@@ -1,76 +1,100 @@
 from backend.db_functions import (
     add_data,
-    delete_data,
-    update_data,
     get_data,
+    update_data,
+    delete_data,
     authorize_user
 )
 
 
 def test_add():
-    try:
-        add_data("users", ["test_user", "12345", "user"])
-        print("Добавление работает")
-    except Exception as e:
-        print("Ошибка при добавлении:", e)
+    print("\n[1] Добавление пользователя")
+
+    result = add_data(
+        "users",
+        ["login", "password", "role"],
+        ["test_user", "12345", "user"]
+    )
+
+    print("Результат:", result)
 
 
 def test_get():
-    try:
-        data = get_data("users")
-        print("Полученные данные:")
-        print(data)
-    except Exception as e:
-        print("Ошибка при получении данных:", e)
+    print("\n[2] Получение пользователей")
+
+    users = get_data("users")
+
+    if users:
+        print("Количество записей:", len(users))
+
+        for user in users:
+            print(user)
+    else:
+        print("Данные не найдены")
 
 
 def test_update():
-    try:
-        update_data(
-            table="users",
-            record_id=1,
-            column="password",
-            new_value="new_password"
-        )
-        print("Изменение работает")
-    except Exception as e:
-        print("Ошибка при изменении:", e)
+    print("\n[3] Изменение пользователя")
 
+    users = get_data("users")
 
-def test_delete():
-    try:
-        delete_data("users", 1)
-        print("Удаление работает")
-    except Exception as e:
-        print("Ошибка при удалении:", e)
+    if not users:
+        print("Нет данных для изменения")
+        return
+
+    user_id = users[-1]["id"]
+
+    result = update_data(
+        "users",
+        user_id,
+        {
+            "password": "99999"
+        }
+    )
+
+    print("Изменено строк:", result)
 
 
 def test_auth():
-    try:
-        result = authorize_user("admin", "admin123")
+    print("\n[4] Авторизация")
 
-        if result:
-            print("Авторизация работает")
-            print(result)
-        else:
-            print("Неверный логин или пароль")
+    user = authorize_user(
+        "test_user",
+        "99999"
+    )
 
-    except Exception as e:
-        print("Ошибка при авторизации:", e)
+    if user:
+        print("Авторизация успешна")
+    else:
+        print("Авторизация не прошла")
+
+
+def test_delete():
+    print("\n[5] Удаление пользователя")
+
+    users = get_data("users")
+
+    if not users:
+        print("Нет записей для удаления")
+        return
+
+    user_id = users[-1]["id"]
+
+    result = delete_data(
+        "users",
+        user_id
+    )
+
+    print("Удалено строк:", result)
 
 
 if __name__ == "__main__":
-    print("\n--- Проверка добавления ---")
+    print("=== Проверка функций БД ===")
+
     test_add()
-
-    print("\n--- Проверка получения данных ---")
     test_get()
-
-    print("\n--- Проверка изменения ---")
     test_update()
-
-    print("\n--- Проверка авторизации ---")
     test_auth()
-
-    print("\n--- Проверка удаления ---")
     test_delete()
+
+    print("\n=== Проверка закончена ===")
