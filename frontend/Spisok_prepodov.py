@@ -32,9 +32,6 @@ editing_row = None
 HOVER_COLOR = "#B8A87C"
 HOVER_SIZE = 14
 
-# Для хранения подсветок
-hover_rects = {}
-
 # ==========================================
 # ФУНКЦИИ ДЛЯ ПОДСВЕТКИ
 # ==========================================
@@ -47,25 +44,36 @@ def on_leave_button_widget(widget, original_bg):
     """Убирает подсветку с обычных tk виджетов"""
     widget.config(bg=original_bg)
 
-def on_enter_canvas_button(btn_id, x, y):
+# Глобальный словарь для хранения подсветок на Canvas
+current_hover_rect = None
+
+def on_enter_canvas_button(event, btn_id, x, y):
     """Подсветка для кнопок на Canvas"""
-    # Удаляем старую подсветку если есть
-    if btn_id in hover_rects:
-        main_canvas.delete(hover_rects[btn_id])
+    global current_hover_rect
+    
+    # Удаляем старую подсветку
+    if current_hover_rect:
+        try:
+            main_canvas.delete(current_hover_rect)
+        except:
+            pass
     
     # Создаём новую подсветку
-    rect = main_canvas.create_rectangle(
+    current_hover_rect = main_canvas.create_rectangle(
         x - HOVER_SIZE, y - HOVER_SIZE, x + HOVER_SIZE, y + HOVER_SIZE,
         fill=HOVER_COLOR, outline=""
     )
-    main_canvas.tag_lower(rect, btn_id)
-    hover_rects[btn_id] = rect
+    main_canvas.tag_lower(current_hover_rect, btn_id)
 
-def on_leave_canvas_button(btn_id):
+def on_leave_canvas_button(event):
     """Убирает подсветку с кнопок на Canvas"""
-    if btn_id in hover_rects:
-        main_canvas.delete(hover_rects[btn_id])
-        del hover_rects[btn_id]
+    global current_hover_rect
+    if current_hover_rect:
+        try:
+            main_canvas.delete(current_hover_rect)
+        except:
+            pass
+        current_hover_rect = None
 
 # ==========================================
 # ФУНКЦИИ ТАБЛИЦЫ
@@ -87,7 +95,16 @@ def draw_checkmark(x, y, size=18):
 
 def save_edit(row):
     """Сохраняет изменения"""
-    global editing_row
+    global editing_row, current_hover_rect
+    
+    # Убираем подсветку
+    if current_hover_rect:
+        try:
+            main_canvas.delete(current_hover_rect)
+        except:
+            pass
+        current_hover_rect = None
+    
     if row in edit_entries:
         # Сохраняем данные из полей ввода
         table_data[row][0] = edit_entries[row]['fio'].get()
@@ -105,7 +122,15 @@ def save_edit(row):
 
 def clear_row(row):
     """Удаляет данные строки"""
-    global editing_row
+    global editing_row, current_hover_rect
+    
+    # Убираем подсветку
+    if current_hover_rect:
+        try:
+            main_canvas.delete(current_hover_rect)
+        except:
+            pass
+        current_hover_rect = None
     
     # Если строка в режиме редактирования - закрываем редактирование
     if row in edit_entries:
@@ -124,7 +149,15 @@ def clear_row(row):
 
 def start_edit(row):
     """Начинает редактирование"""
-    global editing_row
+    global editing_row, current_hover_rect
+    
+    # Убираем подсветку
+    if current_hover_rect:
+        try:
+            main_canvas.delete(current_hover_rect)
+        except:
+            pass
+        current_hover_rect = None
     
     # Если уже редактируем другую строку, сохраняем её
     if editing_row is not None and editing_row != row:
@@ -239,9 +272,6 @@ def update_buttons():
     for item in main_canvas.find_withtag("button_item"):
         main_canvas.delete(item)
     
-    # Очищаем хранилище подсветок
-    hover_rects.clear()
-    
     # Рисуем новые кнопки
     for row in range(1, rows):
         y_center = (row * row_height) + (row_height / 2)
@@ -255,9 +285,8 @@ def update_buttons():
             )
             main_canvas.tag_bind(delete_btn, "<Button-1>", lambda e, r=row: clear_row(r))
             main_canvas.tag_bind(delete_btn, "<Enter>", 
-                lambda e, btn=delete_btn, x=col3_center_x + 15, y=y_center: on_enter_canvas_button(btn, x, y))
-            main_canvas.tag_bind(delete_btn, "<Leave>", 
-                lambda e, btn=delete_btn: on_leave_canvas_button(btn))
+                lambda e, btn=delete_btn, x=col3_center_x + 15, y=y_center: on_enter_canvas_button(e, btn, x, y))
+            main_canvas.tag_bind(delete_btn, "<Leave>", on_leave_canvas_button)
         
         # КАРАНДАШ или ГАЛОЧКА
         if row == editing_row:
@@ -265,9 +294,8 @@ def update_buttons():
             main_canvas.addtag_withtag("button_item", save_btn)
             main_canvas.tag_bind(save_btn, "<Button-1>", lambda e, r=row: save_edit(r))
             main_canvas.tag_bind(save_btn, "<Enter>", 
-                lambda e, btn=save_btn, x=col3_center_x - 15, y=y_center: on_enter_canvas_button(btn, x, y))
-            main_canvas.tag_bind(save_btn, "<Leave>", 
-                lambda e, btn=save_btn: on_leave_canvas_button(btn))
+                lambda e, btn=save_btn, x=col3_center_x - 15, y=y_center: on_enter_canvas_button(e, btn, x, y))
+            main_canvas.tag_bind(save_btn, "<Leave>", on_leave_canvas_button)
         else:
             if images.get("edit"):
                 edit_btn = main_canvas.create_image(
@@ -277,9 +305,8 @@ def update_buttons():
                 )
                 main_canvas.tag_bind(edit_btn, "<Button-1>", lambda e, r=row: start_edit(r))
                 main_canvas.tag_bind(edit_btn, "<Enter>", 
-                    lambda e, btn=edit_btn, x=col3_center_x - 15, y=y_center: on_enter_canvas_button(btn, x, y))
-                main_canvas.tag_bind(edit_btn, "<Leave>", 
-                    lambda e, btn=edit_btn: on_leave_canvas_button(btn))
+                    lambda e, btn=edit_btn, x=col3_center_x - 15, y=y_center: on_enter_canvas_button(e, btn, x, y))
+                main_canvas.tag_bind(edit_btn, "<Leave>", on_leave_canvas_button)
 
 def draw_table():
     """Рисует таблицу (один раз)"""
