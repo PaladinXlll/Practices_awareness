@@ -24,12 +24,11 @@ COLOR_ACCENT_LINE = "#8c531d"
 COLOR_COMBO_BG = "#e6d3ab"
 COLOR_WEEKEND = "#a63a26"
 
-# Цвета для блоков и эффектов
-COLOR_SUBMENU_BG = "#e9dcb0"     # Бежевый фон для плашки («Преподаватели», «Зимний/Летний»)
-COLOR_SUBMENU_HOVER = "#c8c8c8"  # Чистый серый цвет при наведении (hover)
+COLOR_SUBMENU_BG = "#e9dcb0"     
+COLOR_SUBMENU_HOVER = "#c8c8c8"  
 
 # ------------------------------------------------------------------------------
-# Ленивая загрузка иконки
+# Ленивая загрузка иконки (Кэшированная)
 # ------------------------------------------------------------------------------
 _MARKER_ICON_CACHE = None
 
@@ -42,17 +41,12 @@ def get_marker_icon():
         icon_path = os.path.join(base_dir, "toshka.png")
         if os.path.exists(icon_path):
             _MARKER_ICON_CACHE = QIcon(icon_path)
-        else:
-            print(f"⚠️ Иконка не найдена: {icon_path}")
-            _MARKER_ICON_CACHE = None
     return _MARKER_ICON_CACHE
 
-
 # ==============================================================================
-# РУЧНАЯ ОТРИСОВКА ТОЛСТОЙ ЛИНИИ-КАПСУЛЫ (ШИРИНА 12px)
+# РУЧНАЯ ОТРИСОВКА ТОЛСТОЙ ЛИНИИ-КАПСУЛЫ
 # ==============================================================================
 class CapsuleLine(QWidget):
-    """Класс для создания идеально гладких толстых закругленных линий"""
     def __init__(self, width=12, color=COLOR_ACCENT_LINE, parent=None):
         super().__init__(parent)
         self.line_width = width
@@ -74,13 +68,11 @@ class CapsuleLine(QWidget):
             int(offset), int(self.height() - offset)
         )
 
-
 # ==============================================================================
 # БАЗОВЫЕ КОМПОНЕНТЫ
 # ==============================================================================
 
 class FilterCategoryButton(QPushButton):
-    """Кнопка главной категории – всегда с иконкой"""
     def __init__(self, text, is_open=False, parent=None):
         super().__init__(parent)
         self.setCheckable(True)
@@ -114,9 +106,6 @@ class FilterCategoryButton(QPushButton):
         }}
         QPushButton:pressed {{
             background-color: {COLOR_PRESSED_BG};
-        }}
-        QPushButton:checked {{
-            background-color: transparent;
         }}
         """)
         self.toggled.connect(self.update_state)
@@ -158,22 +147,12 @@ class StaticListElement(QWidget):
             text-align: left;
             padding: 8px 10px;
         }}
-        QPushButton:hover {{
-            background-color: {COLOR_SUBMENU_HOVER};
-        }}
-        QPushButton:pressed {{
-            background-color: {COLOR_PRESSED_BG};
-        }}
+        QPushButton:hover {{ background-color: {COLOR_SUBMENU_HOVER}; }}
+        QPushButton:pressed {{ background-color: {COLOR_PRESSED_BG}; }}
         """)
 
-        display_text = text
-        if has_arrow:
-            display_text = f"{text}   ▼"
-        if self.show_icon:
-            self.row_btn.setText(f"   {display_text}")
-        else:
-            self.row_btn.setText(display_text)
-
+        display_text = f"{text}   ▼" if has_arrow else text
+        self.row_btn.setText(f"   {display_text}" if self.show_icon else display_text)
         self.main_vbox.addWidget(self.row_btn)
 
         self.sub_menu_widget = None
@@ -188,16 +167,12 @@ class StaticListElement(QWidget):
             self.is_sub_open = not self.is_sub_open
             self.sub_menu_widget.setVisible(self.is_sub_open)
             arrow = "   ▲" if self.is_sub_open else "   ▼"
-            if self.show_icon:
-                self.row_btn.setText(f"   {self.text}{arrow}")
-            else:
-                self.row_btn.setText(f"{self.text}{arrow}")
+            self.row_btn.setText(f"   {self.text}{arrow}" if self.show_icon else f"{self.text}{arrow}")
 
 
 class ExpandedSubMenu(QWidget):
     def __init__(self, items, has_item_arrows=False, is_nested=False, show_icon_for_items=False, has_bg=False, parent=None):
         super().__init__(parent)
-        
         self.setStyleSheet("background-color: transparent;")
         
         layout = QHBoxLayout(self)
@@ -210,17 +185,11 @@ class ExpandedSubMenu(QWidget):
 
         list_container = QFrame()
         if has_bg:
-            list_container.setStyleSheet(f"""
-                QFrame {{
-                    background-color: {COLOR_SUBMENU_BG};
-                    border-radius: 8px;
-                }}
-            """)
+            list_container.setStyleSheet(f"QFrame {{ background-color: {COLOR_SUBMENU_BG}; border-radius: 8px; }}")
         else:
             list_container.setStyleSheet("background-color: transparent;")
             
         list_container_layout = QVBoxLayout(list_container)
-        
         padding_inside = 6 if has_bg else 0
         list_container_layout.setContentsMargins(padding_inside, padding_inside, padding_inside, padding_inside)
         list_container_layout.setSpacing(3)
@@ -235,9 +204,8 @@ class ExpandedSubMenu(QWidget):
 
         layout.addWidget(list_container)
 
-
 # ==============================================================================
-# КАЛЕНДАРЬ (ДАТА)
+# ОПТИМИЗИРОВАННЫЙ КАЛЕНДАРЬ
 # ==============================================================================
 
 class NoScrollComboBox(QComboBox):
@@ -254,7 +222,6 @@ class CalendarSubMenu(QWidget):
         
         self.current_year = datetime.now().year
         self.current_month = datetime.now().month
-        self.selected_date = datetime.now()
         
         main_layout = QHBoxLayout(self)
         main_layout.setContentsMargins(12, 2, 6, 4)
@@ -264,7 +231,6 @@ class CalendarSubMenu(QWidget):
         main_layout.addWidget(line)
 
         cal_container = QWidget()
-        cal_container.setStyleSheet("background: transparent;")
         cal_layout = QVBoxLayout(cal_container)
 
         self.month_box = NoScrollComboBox()
@@ -299,50 +265,71 @@ class CalendarSubMenu(QWidget):
         self.grid = QGridLayout(self.grid_widget)
         self.grid.setSpacing(2)
         cal_layout.addWidget(self.grid_widget)
-
         main_layout.addWidget(cal_container)
+
+        # Инициализация пула кнопок (Object Pooling)
+        self.init_calendar_grid()
         self.update_calendar_grid()
 
-    def on_month_changed(self):
-        self.current_month = self.month_box.currentIndex() + 1
-        self.update_calendar_grid()
-
-    def update_calendar_grid(self):
-        while self.grid.count():
-            item = self.grid.takeAt(0)
-            if item.widget():
-                item.widget().deleteLater()
-
+    def init_calendar_grid(self):
+        """Создает каркас сетки один раз при инициализации интерфейса"""
         for col, day in enumerate(["пн", "вт", "ср", "чт", "пт", "сб", "вс"]):
             lbl = QLabel(day)
             lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
             lbl.setStyleSheet(f"color: {COLOR_WEEKEND if col>=5 else COLOR_TEXT_DARK}; font-family: '{FONT_FAMILY}'; font-size: 12px; font-weight: bold;")
             self.grid.addWidget(lbl, 0, col)
 
-        cal_obj = calendar.Calendar(firstweekday=0)
-        month_weeks = cal_obj.monthdayscalendar(self.current_year, self.current_month)
-
-        for row, week in enumerate(month_weeks, 1):
-            for col, day in enumerate(week):
-                if day == 0:
-                    continue
-                btn = QPushButton(str(day))
+        # Пул из 42 кнопок для дней (максимум 6 недель)
+        self.day_buttons = []
+        btn_style = f"""
+        QPushButton {{
+            background: transparent;
+            color: {COLOR_TEXT_DARK};
+            font-family: "{FONT_FAMILY}";
+            border: 0px;
+            border-radius: 4px;
+        }}
+        QPushButton:hover {{ background: {COLOR_SUBMENU_HOVER}; }}
+        QPushButton:pressed {{ background: {COLOR_PRESSED_BG}; }}
+        """
+        for row in range(1, 7):
+            for col in range(7):
+                btn = QPushButton()
                 btn.setFixedSize(28, 24)
                 btn.setCursor(Qt.CursorShape.PointingHandCursor)
-                btn.setStyleSheet(f"""
-                QPushButton {{
-                    background: transparent;
-                    color: {COLOR_TEXT_DARK};
-                    font-family: "{FONT_FAMILY}";
-                    border: 0px;
-                    border-radius: 4px;
-                }}
-                QPushButton:hover {{ background: {COLOR_SUBMENU_HOVER}; }}
-                QPushButton:pressed {{ background: {COLOR_PRESSED_BG}; }}
-                """)
-                btn.clicked.connect(lambda checked, y=self.current_year, m=self.current_month, d=day: self.dateSelected.emit(y, m, d))
+                btn.setStyleSheet(btn_style)
+                btn.clicked.connect(self.on_day_clicked)
                 self.grid.addWidget(btn, row, col)
+                self.day_buttons.append(btn)
 
+    def on_month_changed(self):
+        self.current_month = self.month_box.currentIndex() + 1
+        self.update_calendar_grid()
+
+    def update_calendar_grid(self):
+        """Переиспользует существующие кнопки, исключая утечки памяти"""
+        cal_obj = calendar.Calendar(firstweekday=0)
+        month_weeks = cal_obj.monthdayscalendar(self.current_year, self.current_month)
+        
+        # Линеаризуем матрицу дней месяца
+        flat_days = []
+        for week in month_weeks:
+            flat_days.extend(week)
+        # Добиваем нулями до размера пула, если необходимо
+        flat_days.extend([0] * (len(self.day_buttons) - len(flat_days)))
+
+        for btn, day in zip(self.day_buttons, flat_days):
+            if day == 0:
+                btn.setVisible(False)
+            else:
+                btn.setText(str(day))
+                btn.setProperty("day_val", day)
+                btn.setVisible(True)
+
+    def on_day_clicked(self):
+        btn = self.sender()
+        if btn and btn.property("day_val"):
+            self.dateSelected.emit(self.current_year, self.current_month, btn.property("day_val"))
 
 # ==============================================================================
 # ОСНОВНОЙ ВИДЖЕТ ФИЛЬТРА
@@ -352,6 +339,7 @@ class CalendarGoldFilterWidget(QWidget):
     def __init__(self):
         super().__init__()
         self.setMinimumWidth(280)
+        self.setMaximumWidth(350)  # Ограничиваем максимальную ширину
         self.setObjectName("Main")
         self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
         
@@ -365,21 +353,27 @@ class CalendarGoldFilterWidget(QWidget):
             background: transparent;
             border: 0px;
         }}
-        QScrollBar:vertical {{
+        /* Полностью скрываем все скроллбары */
+        QScrollBar:vertical, QScrollBar:horizontal {{
             background: transparent;
-            width: 14px; 
-            margin: 0px;
-        }}
-        QScrollBar::handle:vertical {{
-            background: {COLOR_ACCENT_LINE};
-            border-radius: 7px;
-            min-height: 20px;
-        }}
-        QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {{
+            width: 0px;
             height: 0px;
+            margin: 0px;
+            border: none;
         }}
-        QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {{
-            background: none;
+        QScrollBar::handle:vertical, QScrollBar::handle:horizontal {{ 
+            background: transparent; 
+            min-height: 0px;
+            min-width: 0px;
+        }}
+        QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical,
+        QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal {{ 
+            height: 0px;
+            width: 0px;
+        }}
+        QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical,
+        QScrollBar::add-page:horizontal, QScrollBar::sub-page:horizontal {{ 
+            background: none; 
         }}
         """)
 
@@ -392,21 +386,25 @@ class CalendarGoldFilterWidget(QWidget):
         title.setStyleSheet(f"color: {COLOR_TEXT_DARK}; font-family: '{FONT_FAMILY}'; font-size: {FONT_SIZE_LARGE}px; font-weight: bold;")
         header.addWidget(title)
         header.addStretch()
+        
+        btn_style = f"QPushButton {{ background: transparent; color: {COLOR_TEXT_DARK}; font-family: '{FONT_FAMILY}'; font-weight: bold; font-size: {FONT_SIZE_LARGE}px; }} QPushButton:hover {{ color: white; }}"
         for icon in ["✓", "✕"]:
             btn = QPushButton(icon)
             btn.setFixedWidth(25)
             btn.setCursor(Qt.CursorShape.PointingHandCursor)
-            btn.setStyleSheet(f"QPushButton {{ background: transparent; color: {COLOR_TEXT_DARK}; font-family: '{FONT_FAMILY}'; font-weight: bold; font-size: {FONT_SIZE_LARGE}px; }} QPushButton:hover {{ color: white; }}")
+            btn.setStyleSheet(btn_style)
             header.addWidget(btn)
         layout.addLayout(header)
 
-        # Прокручиваемая область
+        # Прокручиваемая область - только колёсиком, без полос прокрутки
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
         scroll.setFrameShape(QFrame.Shape.NoFrame)
-        
-        # ОТКЛЮЧАЕМ СКРОЛЛБАРЫ СПРАВА И СНИЗУ:
+        # Отключаем обе полосы прокрутки
+        scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         scroll.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        # Разрешаем прокрутку только колёсиком мыши
+        scroll.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
         scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
 
         content = QWidget()
@@ -415,10 +413,19 @@ class CalendarGoldFilterWidget(QWidget):
         self.clayout.setSpacing(8)
         self.clayout.setContentsMargins(0, 0, 0, 0)
 
-        # Секции
-        self.add_sec("Мероприятия", ["Конференция", "День открытых дверей", "Семинар"], open=False, has_arrows=False, has_bg=False)
+        # Секции с обновлённым списком мероприятий
+        self.add_sec("Мероприятия", [
+            "Конференция",
+            "День открытых дверей",
+            "Методический семинар",
+            "Педагогическое чтение",
+            "Шестерёнь",
+            "Мастер-класс",
+            "Чтение",
+            "Профессиональные пробы",
+            "Чемпионат"
+        ], open=False, has_arrows=False, has_bg=False)
         
-        # Преподаватели
         self.add_sec("Преподаватели", 
                      ["Агашина Анастасия Евгеньевна", "Денисова Анна Алексеевна", "Томилова Анна Владимировна", "Малишева Платон Отарович", "Никитин Владислав Сергеевич"], 
                      open=False, has_arrows=False, has_bg=True)
@@ -432,9 +439,8 @@ class CalendarGoldFilterWidget(QWidget):
         self.clayout.addWidget(self.cal_btn)
         self.clayout.addWidget(self.cal_view)
 
-        # Учебный год — Добавлен элемент "2026/2027"
+        # Учебный год
         self.add_sec("Учебный год", ["2024/2025", "2025/2026", "2026/2027"], open=True, has_arrows=True, has_bg=False)
-        
         self.add_sec("Контроль", ["Наумушкина Н.С.", "Кучина А.А.", "Сметанина К.В."], open=False, has_arrows=False, has_bg=False)
 
         self.clayout.addStretch()
@@ -458,8 +464,8 @@ if __name__ == "__main__":
     
     font = QFont("Advent Pro", 12)
     app.setFont(font)
-    
     app.setStyle("Fusion")
+    
     w = CalendarGoldFilterWidget()
     w.show()
     w.resize(300, 600)
