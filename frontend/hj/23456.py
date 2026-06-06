@@ -1,5 +1,8 @@
 import customtkinter as ctk
 import tkinter as tk
+from tkinter import Canvas
+from GradientFrame import GradientFrame
+from tkinter import Tk
 from PIL import Image, ImageDraw, ImageTk
 import math
 import os
@@ -10,9 +13,6 @@ import os
 
 ctk.set_appearance_mode("light")
 ctk.set_default_color_theme("blue")
-
-ctk.set_widget_scaling(1)
-ctk.set_window_scaling(1)
 
 
 # ==========================================
@@ -144,7 +144,7 @@ class App(ctk.CTk):
 
         try:
 
-            logo_path = "frontend/assets/logo.png"
+            logo_path = "assets/logo.png"
 
             if os.path.exists(logo_path):
 
@@ -230,62 +230,37 @@ class LoginFrame(ctk.CTkFrame):
             rely=0.5,
             anchor="center"
         )
-
-        self.card.pack_propagate(False)
-        self.card.grid_propagate(False)
-
         # ==========================================
-        # HEADER ГРАДИЕНТ
+        # HEADER ГРАДИЕНТ (GradientFrame)
+        # ==========================================
+            # ==========================================
+        # HEADER ГРАДИЕНТ (GradientFrame)
         # ==========================================
 
         header_height = 110
 
-        self.header_canvas = tk.Canvas(
+        self.header_canvas = GradientFrame(
             self.card,
+            width=card_width,
             height=header_height,
+            colors=("#C9AE6D", "#A8731F"),
+            direction=GradientFrame.left2right,
             highlightthickness=0,
-            bd=0,
-            bg="#F2F2F2"
+            bd=0
         )
 
         self.header_canvas.place(
             x=0,
-            y=0,
-            relwidth=1,
-            height=header_height
+            y=0
         )
 
-        def draw_header(event=None):
-            real_width = self.card.winfo_width()
-
-            if real_width <= 1:
-                return
-
-            self.header_image = create_gradient_image(
-                real_width,
-                header_height,
-                radius=0
-            )
-
-            self.header_canvas.delete("all")
-
-            self.header_canvas.create_image(
-                0,
-                0,
-                anchor="nw",
-                image=self.header_image
-            )
-
-            self.header_canvas.create_text(
-                real_width // 2,
-                header_height // 2,
-                text="Авторизация",
-                fill="white",
-                font=("Advent Pro", 50)
-            )
-
-        self.card.bind("<Configure>", draw_header)
-
+        self.header_canvas.create_text(
+            card_width // 2,
+            header_height // 2,
+            text="Авторизация",
+            fill="white",
+            font=("Advent Pro", 50)
+        )
         # ==========================================
         # ЛОГИН
         # ==========================================
@@ -296,7 +271,7 @@ class LoginFrame(ctk.CTkFrame):
             height=73,
             placeholder_text="Логин",
             font=("Advent Pro", 28),
-            corner_radius=30,
+            corner_radius=25,
             border_width=2,
             border_color="#555555",
             fg_color="#F2F2F2",
@@ -319,7 +294,7 @@ class LoginFrame(ctk.CTkFrame):
             height=73,
             placeholder_text="Пароль",
             font=("Advent Pro", 28),
-            corner_radius=30,
+            corner_radius=25,
             border_width=2,
             border_color="#555555",
             fg_color="#F2F2F2",
@@ -355,13 +330,13 @@ class LoginFrame(ctk.CTkFrame):
         # КНОПКА
         # ==========================================
 
-        btn_width = 470
-        btn_height = 80
+        btn_width = 410
+        btn_height = 74
 
         self.btn_image = create_gradient_image(
             btn_width,
             btn_height,
-            radius=30
+            radius=20
         )
 
         self.btn_canvas = tk.Canvas(
