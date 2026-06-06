@@ -1,7 +1,15 @@
-from backend.db_functions import authorize_user
+from db_functions import authorize_user
 
+
+def main():
+    login = input("Введите логин: ").strip()
+    password = input("Введите пароль: ").strip()
+
+    authorize_user(
+        login_input=login,
+        password_input=password
+    )
 
 
 if __name__ == "__main__":
-    print("Попытка входа пользователя с логином '1111'")
-    authorize_user(login_input="1111", password_input="0000")
+    main()
