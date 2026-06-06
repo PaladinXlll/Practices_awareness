@@ -7,10 +7,12 @@ load_dotenv()
 DATABASE=os.getenv("DATABASE")
 USER=os.getenv("LOGIN")
 PASSWORD=os.getenv("PASSWORD")
+HOST = os.getenv("HOST")
+PORT = int(os.getenv("PORT", 3306))
 
 db_config = {
-    'host': '192.168.200.18',
-    'port': 3306,
+    'host': HOST,
+    'port' : PORT,
     'user': USER,
     'password': PASSWORD,
     'database': DATABASE,
@@ -26,3 +28,4 @@ def get_connection():
     except Error as e:
         print(f"️ Ошибка подключения к MySQL: {e}")
         return None
+
