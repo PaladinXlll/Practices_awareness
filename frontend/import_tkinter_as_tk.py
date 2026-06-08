@@ -138,7 +138,7 @@ class App(ctk.CTk):
 
         description_title = ctk.CTkLabel(
             body,
-            text="Описание",
+            text="Описание:",
             text_color="black",
             font=("Advent Pro", 22)
         )
@@ -168,13 +168,13 @@ class App(ctk.CTk):
 
         # ---------- ПРЕПОДАВАТЕЛИ ----------
 
-        teachers_title = ctk.CTkLabel(info_window, text="Преподаватели", text_color="black", fg_color="transparent", font=("Advent Pro", 22))
+        teachers_title = ctk.CTkLabel(info_window, text="Преподаватели:", text_color="black", fg_color="transparent", font=("Advent Pro", 22))
 
         teachers_title.place(x=20, y=428)
 
         # текст преподаватели
 
-        teachers_title = ctk.CTkLabel(info_window, text="Преподаватели", text_color="black", fg_color="transparent", font=("Advent Pro", 22))
+        teachers_title = ctk.CTkLabel(info_window, text="Преподаватели:", text_color="black", fg_color="transparent", font=("Advent Pro", 22))
 
         teachers_title.place(x=20, y=428)
 
