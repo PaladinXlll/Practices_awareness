@@ -1,8 +1,14 @@
+import threading
 import customtkinter as ctk
 import tkinter as tk
 from PIL import Image, ImageDraw, ImageTk
 import math
+import sys
 import os
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from backend.db_functions import authorize_user
+
 
 # ==========================================
 # НАСТРОЙКА
@@ -375,7 +381,7 @@ class LoginFrame(ctk.CTkFrame):
 
         self.btn_canvas.place(
             relx=0.5,
-            y=535,
+            y=440,
             anchor="center"
         )
 
@@ -414,7 +420,26 @@ class LoginFrame(ctk.CTkFrame):
         login = self.entry_log.get()
         password = self.entry_pass.get()
 
-        if login == "q" and password == "1":
+        self.error_label.configure(
+            text="Проверка..."
+        )
+
+        def auth_task():
+
+            user = authorize_user(login, password)
+
+            self.after(
+                0,
+                lambda: self.handle_auth_result(user)
+            )
+        threading.Thread(
+            target=auth_task,
+            daemon=True
+        ).start()
+
+    def handle_auth_result(self, user):
+
+        if user:
 
             self.on_login_success()
 
@@ -423,7 +448,6 @@ class LoginFrame(ctk.CTkFrame):
             self.error_label.configure(
                 text="Неверный логин или пароль"
             )
-
 
 # ==========================================
 # DASHBOARD
