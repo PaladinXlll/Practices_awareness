@@ -1,22 +1,43 @@
-import tkinter as tk
-from tkinter import font as tkfont, simpledialog
-from PIL import Image, ImageTk
-import customtkinter as ctk
 import os
 import sys
-import threading
-# Добавляем путь к папке git
-sys.path.append(r'C:\Users\User\Desktop\proekt\git')
 
-# Теперь импортируем из backend
-from backend.db_teachers import get_teachers, add_teacher, update_teacher, delete_teacher
+# ==========================================
+# ПУТИ ПРОЕКТА
+# ==========================================
+
+# Корень проекта (git/)
+PROJECT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+# Добавляем корень проекта для импорта backend
+if PROJECT_DIR not in sys.path:
+    sys.path.append(PROJECT_DIR)
+
+# Папка frontend/
+CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
+
+# Папка frontend/assets/
+ASSETS_DIR = os.path.join(CURRENT_DIR, "assets")
+
+# ==========================================
+# ИМПОРТЫ
+# ==========================================
+
+import tkinter as tk
+from tkinter import font as tkfont, simpledialog, messagebox
+from PIL import Image, ImageTk
+import customtkinter as ctk
+import threading
+
+# Backend
+from backend.db_teachers import (
+    get_teachers,
+    add_teacher,
+    update_teacher,
+    delete_teacher
+)
+
 from backend.db_teachers_event import get_teacher_events
 
-from tkinter import messagebox
-
-
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-ASSETS_DIR = os.path.join(BASE_DIR, "assets")
 
 # ==========================================
 # ТЕМА ДЛЯ CUSTOMTKINTER
@@ -199,7 +220,7 @@ def save_edit(row):
         update_table_display()
         update_buttons()
 
-        
+
 def clear_row(row):
     """Удаляет данные строки"""
     global editing_row, current_hover_rect
