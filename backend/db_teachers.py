@@ -30,20 +30,20 @@ def add_teacher(surname, name, patronymic):
 
     if not is_valid:
         print(message)
-        return False
+        return None
 
-    result = add_data(
+    teacher_id = add_data(
         table="teachers",
         columns=["surname", "name", "patronymic"],
         values=(surname.strip(), name.strip(), patronymic.strip())
     )
 
-    if result:
-        print("Преподаватель добавлен")
-        return True
+    if teacher_id:
+        print("Преподаватель добавлен, ID:", teacher_id)
+        return teacher_id
 
     print("Преподаватель не добавлен")
-    return False
+    return None
 
 
 def update_teacher(teacher_id, surname, name, patronymic):
