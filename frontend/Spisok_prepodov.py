@@ -81,34 +81,40 @@ def load_teachers_from_db():
         teachers = get_teachers()
 
         def update_ui():
-            global table_data
+            global table_data, editing_row, edit_entries
 
-            table_data.clear()
+            # если сейчас идёт редактирование — закрываем его
+            for row in list(edit_entries.keys()):
+                try:
+                    edit_entries[row]['fio'].destroy()
+                    edit_entries[row]['practice'].destroy()
+                except:
+                    pass
 
-            # Заголовок таблицы
-            table_data.append(["ФИО", "Практики", ""])
+            edit_entries.clear()
+            editing_row = None
+
+            # пересобираем таблицу заново (БД = источник истины)
+            new_table = [["ФИО", "Практики", ""]]
 
             for teacher in teachers:
-                fio = (
-                    f"{teacher['surname']} "
-                    f"{teacher['name']} "
-                    f"{teacher['patronymic']}"
-                )
+                fio = f"{teacher['surname']} {teacher['name']} {teacher['patronymic']}"
 
-                table_data.append([
+                new_table.append([
                     fio,
                     "",
                     teacher["teacher_id"]
                 ])
 
+            table_data = new_table
+
             draw_table()
 
+        # обновление UI в главном потоке Tkinter
         root.after(0, update_ui)
 
     except Exception as e:
         print("Ошибка загрузки:", e)
-
-
 
 
 
@@ -281,35 +287,36 @@ def save_edit(row):
 
         editing_row = None
 
-        update_table_display()
-        update_buttons()
+        threading.Thread(
+    target=load_teachers_from_db,
+    daemon=True
+    ).start()
 
         print("Изменения сохранены")
 
 def clear_row(row):
-    """Удаляет данные строки"""
     global editing_row, current_hover_rect
-    
-    # Убираем подсветку
+
     if current_hover_rect:
         try:
             main_canvas.delete(current_hover_rect)
         except:
             pass
         current_hover_rect = None
-    
-    # Если строка в режиме редактирования - закрываем редактирование
+
+    # если редактируем строку — закрываем редактор
     if row in edit_entries:
         edit_entries[row]['fio'].destroy()
         edit_entries[row]['practice'].destroy()
         del edit_entries[row]
         editing_row = None
-    
+
     teacher_id = table_data[row][2]
 
     if teacher_id:
-      delete_teacher(int(teacher_id))
+        delete_teacher(int(teacher_id))
 
+    # 🔥 ВАЖНО: перезагружаем данные из БД
     threading.Thread(
         target=load_teachers_from_db,
         daemon=True
