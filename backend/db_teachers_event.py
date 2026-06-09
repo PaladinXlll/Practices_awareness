@@ -1,5 +1,5 @@
-from db_functions import add_teacher_event, delete_teacher_event, execute_select
-from validators import validate_id
+from .db_functions import execute_select, add_data, delete_data
+from .validators import validate_id
 
 
 def add_teacher_to_event(teacher_id, event_id):

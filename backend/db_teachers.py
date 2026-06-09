@@ -1,6 +1,5 @@
-from db_functions import get_data, add_data, update_data, delete_data
-from validators import validate_teacher_data, validate_id
-
+from .db_functions import get_data, add_data, update_data, delete_data
+from .validators import validate_teacher_data, validate_id
 
 TEACHER_COLUMNS = ["teacher_id", "surname", "name", "patronymic"]
 

@@ -3,6 +3,20 @@ from tkinter import font as tkfont, simpledialog
 from PIL import Image, ImageTk
 import customtkinter as ctk
 import os
+import sys
+import threading
+# Добавляем путь к папке git
+sys.path.append(r'C:\Users\User\Desktop\proekt\git')
+
+# Теперь импортируем из backend
+from backend.db_teachers import get_teachers, add_teacher, update_teacher, delete_teacher
+from backend.db_teachers_event import get_teacher_events
+
+from tkinter import messagebox
+
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+ASSETS_DIR = os.path.join(BASE_DIR, "assets")
 
 # ==========================================
 # ТЕМА ДЛЯ CUSTOMTKINTER
@@ -28,6 +42,49 @@ table_data[0][0] = "ФИО"
 # Для хранения полей ввода
 edit_entries = {}
 editing_row = None
+
+
+def load_teachers_from_db():
+    try:
+        teachers = get_teachers()
+
+        def update_ui():
+            global table_data
+
+            table_data.clear()
+
+            # Заголовок таблицы
+            table_data.append(["ФИО", "Практики", ""])
+
+            for teacher in teachers:
+                fio = (
+                    f"{teacher['surname']} "
+                    f"{teacher['name']} "
+                    f"{teacher['patronymic']}"
+                )
+
+                table_data.append([
+                    fio,
+                    "",
+                    teacher["teacher_id"]
+                ])
+
+            draw_table()
+
+        root.after(0, update_ui)
+
+    except Exception as e:
+        print("Ошибка загрузки:", e)
+
+
+
+
+
+
+
+
+
+
 
 HOVER_COLOR = "#B8A87C"
 HOVER_SIZE = 14
@@ -96,7 +153,7 @@ def draw_checkmark(x, y, size=18):
 def save_edit(row):
     """Сохраняет изменения"""
     global editing_row, current_hover_rect
-    
+
     # Убираем подсветку
     if current_hover_rect:
         try:
@@ -104,22 +161,45 @@ def save_edit(row):
         except:
             pass
         current_hover_rect = None
-    
+
     if row in edit_entries:
-        # Сохраняем данные из полей ввода
-        table_data[row][0] = edit_entries[row]['fio'].get()
-        table_data[row][1] = edit_entries[row]['practice'].get()
-        
-        # Удаляем поля ввода
+        # UI данные
+        fio = edit_entries[row]['fio'].get()
+        practice = edit_entries[row]['practice'].get()
+
+        table_data[row][0] = fio
+        table_data[row][1] = practice
+
+        # 🔥 ДОБАВЛЯЕМ ТОЛЬКО ЭТО (БЕЗ ЛОМАНИЯ ДИЗАЙНА)
+        try:
+            teacher_id = table_data[row][2]
+
+            if teacher_id:
+                parts = fio.split()
+
+                surname = parts[0] if len(parts) > 0 else ""
+                name = parts[1] if len(parts) > 1 else ""
+                patronymic = parts[2] if len(parts) > 2 else ""
+
+                update_teacher(
+                    int(teacher_id),
+                    surname,
+                    name,
+                    patronymic
+                )
+        except Exception as e:
+            print("DB update error:", e)
+
+        # UI cleanup (оставляем как есть)
         edit_entries[row]['fio'].destroy()
         edit_entries[row]['practice'].destroy()
         del edit_entries[row]
         editing_row = None
-        
-        # Обновляем отображение
+
         update_table_display()
         update_buttons()
 
+        
 def clear_row(row):
     """Удаляет данные строки"""
     global editing_row, current_hover_rect
@@ -139,13 +219,15 @@ def clear_row(row):
         del edit_entries[row]
         editing_row = None
     
-    # Очищаем данные строки
-    table_data[row][0] = ""
-    table_data[row][1] = ""
-    
-    # Обновляем отображение
-    update_table_display()
-    update_buttons()
+    teacher_id = table_data[row][2]
+
+    if teacher_id:
+      delete_teacher(int(teacher_id))
+
+    threading.Thread(
+        target=load_teachers_from_db,
+        daemon=True
+    ).start()
 
 def start_edit(row):
     """Начинает редактирование"""
@@ -372,14 +454,14 @@ def update_layout(event=None):
 # ==========================================
 
 try:
-    edit_img = Image.open("frontend/assets/edit.png")
+    edit_img = Image.open(os.path.join(ASSETS_DIR, "edit.png"))
     edit_img = edit_img.resize((25, 25))
     images["edit"] = ImageTk.PhotoImage(edit_img)
 except:
     pass
 
 try:
-    delete_img = Image.open("frontend/assets/delete.png")
+    delete_img = Image.open(os.path.join(ASSETS_DIR, "delete.png"))
     delete_img = delete_img.resize((25, 25))
     images["delete"] = ImageTk.PhotoImage(delete_img)
 except:
@@ -495,4 +577,10 @@ root.bind('<F11>', toggle_fullscreen)
 root.bind('<Configure>', update_layout)
 
 root.after(100, draw_table)
+
+threading.Thread(
+    target=load_teachers_from_db,
+    daemon=True
+).start()
+
 root.mainloop()
