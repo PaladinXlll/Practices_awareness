@@ -65,6 +65,17 @@ edit_entries = {}
 editing_row = None
 
 
+import subprocess
+
+def open_main(event=None):
+    root.destroy()
+
+    subprocess.Popen([
+        sys.executable,
+        os.path.join(PROJECT_DIR, "frontend", "main_2.0.py")
+    ])
+
+
 def load_teachers_from_db():
     try:
         teachers = get_teachers()
@@ -99,6 +110,51 @@ def load_teachers_from_db():
 
 
 
+
+
+def add_teacher_dialog(event=None):
+    fio = simpledialog.askstring(
+        "Добавить преподавателя",
+        "Введите ФИО:\nФамилия Имя Отчество"
+    )
+
+    if not fio:
+        return
+
+    parts = fio.strip().split()
+
+    if len(parts) < 3:
+        messagebox.showerror(
+            "Ошибка",
+            "Введите ФИО полностью"
+        )
+        return
+
+    surname = parts[0]
+    name = parts[1]
+    patronymic = " ".join(parts[2:])
+
+    result = add_teacher(
+        surname,
+        name,
+        patronymic
+    )
+
+    if result:
+        threading.Thread(
+            target=load_teachers_from_db,
+            daemon=True
+        ).start()
+
+        messagebox.showinfo(
+            "Успех",
+            "Преподаватель добавлен"
+        )
+    else:
+        messagebox.showerror(
+            "Ошибка",
+            "Не удалось добавить преподавателя"
+        )
 
 
 
@@ -172,10 +228,8 @@ def draw_checkmark(x, y, size=18):
     )
 
 def save_edit(row):
-    """Сохраняет изменения"""
     global editing_row, current_hover_rect
 
-    # Убираем подсветку
     if current_hover_rect:
         try:
             main_canvas.delete(current_hover_rect)
@@ -184,42 +238,53 @@ def save_edit(row):
         current_hover_rect = None
 
     if row in edit_entries:
-        # UI данные
-        fio = edit_entries[row]['fio'].get()
-        practice = edit_entries[row]['practice'].get()
+
+        fio = edit_entries[row]['fio'].get().strip()
+        practice = edit_entries[row]['practice'].get().strip()
+
+        teacher_id = table_data[row][2]
+
+        parts = fio.split()
+
+        if len(parts) < 3:
+            messagebox.showerror(
+                "Ошибка",
+                "Введите ФИО полностью:\nФамилия Имя Отчество"
+            )
+            return
+
+        surname = parts[0]
+        name = parts[1]
+        patronymic = " ".join(parts[2:])
+
+        success = update_teacher(
+            int(teacher_id),
+            surname,
+            name,
+            patronymic
+        )
+
+        if not success:
+            messagebox.showerror(
+                "Ошибка",
+                "Не удалось сохранить изменения"
+            )
+            return
 
         table_data[row][0] = fio
         table_data[row][1] = practice
 
-        # 🔥 ДОБАВЛЯЕМ ТОЛЬКО ЭТО (БЕЗ ЛОМАНИЯ ДИЗАЙНА)
-        try:
-            teacher_id = table_data[row][2]
-
-            if teacher_id:
-                parts = fio.split()
-
-                surname = parts[0] if len(parts) > 0 else ""
-                name = parts[1] if len(parts) > 1 else ""
-                patronymic = parts[2] if len(parts) > 2 else ""
-
-                update_teacher(
-                    int(teacher_id),
-                    surname,
-                    name,
-                    patronymic
-                )
-        except Exception as e:
-            print("DB update error:", e)
-
-        # UI cleanup (оставляем как есть)
         edit_entries[row]['fio'].destroy()
         edit_entries[row]['practice'].destroy()
+
         del edit_entries[row]
+
         editing_row = None
 
         update_table_display()
         update_buttons()
 
+        print("Изменения сохранены")
 
 def clear_row(row):
     """Удаляет данные строки"""
@@ -516,19 +581,36 @@ logo2.pack(anchor="w", padx=(90, 0))
 
 # Логотип
 try:
-    logo_path = "frontend/assets/logo.png"
+    logo_path = os.path.join(ASSETS_DIR, "logo.png")
+
     if os.path.exists(logo_path):
         image = Image.open(logo_path)
         image = image.resize((145, 145))
+
         logo_img = ImageTk.PhotoImage(image)
-        logo_label = tk.Label(header_frame, image=logo_img, bg="#986722", bd=0)
+
+        logo_label = tk.Label(
+            header_frame,
+            image=logo_img,
+            bg="#986722",
+            bd=0
+        )
+
         logo_label.image = logo_img
         logo_label.pack(side="right", padx=20, pady=10)
-        # Подсветка для логотипа
-        logo_label.bind("<Enter>", lambda e: on_enter_button_widget(logo_label, "#986722"))
-        logo_label.bind("<Leave>", lambda e: on_leave_button_widget(logo_label, "#986722"))
-except:
-    pass
+
+        logo_label.bind(
+            "<Enter>",
+            lambda e: on_enter_button_widget(logo_label, "#986722")
+        )
+
+        logo_label.bind(
+            "<Leave>",
+            lambda e: on_leave_button_widget(logo_label, "#986722")
+        )
+
+except Exception as e:
+    print("Ошибка загрузки logo.png:", e)
 
 # Контейнер с надписью
 teachers_container = tk.Frame(root, bg='#DBC685', height=51.5)
@@ -540,7 +622,7 @@ teachers_inner.pack(side="left", padx=20)
 
 # Иконка
 try:
-    icon_path = "frontend/assets/main.png"
+    icon_path = os.path.join(ASSETS_DIR, "main.png")
     if os.path.exists(icon_path):
         icon_image = Image.open(icon_path)
         icon_image = icon_image.resize((24, 24))
@@ -548,6 +630,8 @@ try:
         icon_label = tk.Label(teachers_inner, image=main_icon, bg='#DBC685', bd=0)
         icon_label.image = main_icon
         icon_label.pack(side="left", padx=(0, 10))
+        icon_label.bind("<Button-1>", open_main)
+
         # Подсветка для иконки
         icon_label.bind("<Enter>", lambda e: on_enter_button_widget(icon_label, "#DBC685"))
         icon_label.bind("<Leave>", lambda e: on_leave_button_widget(icon_label, "#DBC685"))
@@ -563,20 +647,42 @@ teachers_label.pack(side="left")
 
 # Кнопка добавления
 try:
-    create_path = "frontend/assets/create.png"
-    if os.path.exists(create_path):
-        create_image = Image.open(create_path)
-        create_image = create_image.resize((39, 39))
-        create_icon = ImageTk.PhotoImage(create_image)
-        create_button = tk.Label(teachers_container, image=create_icon, bg='#DBC685', bd=0)
-        create_button.image = create_icon
-        create_button.pack(side="right", padx=20)
-        # Подсветка для кнопки добавления
-        create_button.bind("<Enter>", lambda e: on_enter_button_widget(create_button, "#DBC685"))
-        create_button.bind("<Leave>", lambda e: on_leave_button_widget(create_button, "#DBC685"))
-except:
-    pass
+    create_path = os.path.join(ASSETS_DIR, "create.png")
 
+    create_image = Image.open(create_path)
+    create_image = create_image.resize((39, 39))
+
+    create_icon = ImageTk.PhotoImage(create_image)
+
+    create_button = tk.Label(
+        teachers_container,
+        image=create_icon,
+        bg='#DBC685',
+        bd=0
+    )
+
+    create_button.image = create_icon
+    create_button.pack(side="right", padx=20)
+
+    create_button.bind(
+    "<Button-1>",
+    add_teacher_dialog
+    )
+
+    create_button.bind(
+        "<Enter>",
+        lambda e: on_enter_button_widget(create_button, "#DBC685")
+    )
+
+    create_button.bind(
+        "<Leave>",
+        lambda e: on_leave_button_widget(create_button, "#DBC685")
+    )
+
+except Exception as e:
+    print("Ошибка загрузки create.png:", e)
+
+    
 # Полоса
 bar = tk.Frame(root, bg='#986722', height=0)
 bar.place(x=0, y=150.5, width=1280)
