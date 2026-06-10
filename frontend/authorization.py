@@ -417,8 +417,8 @@ class LoginFrame(ctk.CTkFrame):
 
     def check_credentials(self):
 
-        login = self.entry_log.get()
-        password = self.entry_pass.get()
+        login = self.entry_log.get().strip()
+        password = self.entry_pass.get().strip()
 
         self.error_label.configure(
             text="Проверка..."
@@ -426,12 +426,22 @@ class LoginFrame(ctk.CTkFrame):
 
         def auth_task():
 
-            user = authorize_user(login, password)
+            try:
+                user = authorize_user(login, password)
 
-            self.after(
-                0,
-                lambda: self.handle_auth_result(user)
-            )
+                self.after(
+                    0,
+                    lambda: self.handle_auth_result(user)
+                )
+            except Exception as e:
+                print(e)
+                self.after(
+                    0,
+                    lambda: self.error_label.configure(
+                        text="Ошибка подключения к БД"
+                    )
+                )
+
         threading.Thread(
             target=auth_task,
             daemon=True
